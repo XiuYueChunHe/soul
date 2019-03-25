@@ -41,7 +41,7 @@ public class DubboServiceProxyTest extends BaseTest {
     public void before() {
         dubboHandle = new DubboHandle();
         dubboHandle.setAppName("local");
-        dubboHandle.setRegistry("zookeeper://localhost:2181");
+        dubboHandle.setRegistry("zookeeper://192.168.0.115:2181");
         dubboHandle.setTimeout(3000);
     }
 

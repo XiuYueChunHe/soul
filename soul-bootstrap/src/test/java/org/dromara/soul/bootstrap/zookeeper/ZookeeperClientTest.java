@@ -247,7 +247,7 @@ public class ZookeeperClientTest extends BaseTest {
     private static DubboHandle buildDubboHandle() {
         DubboHandle dubboHandle = new DubboHandle();
         dubboHandle.setAppName("local");
-        dubboHandle.setRegistry("zookeeper://localhost:2181");
+        dubboHandle.setRegistry("zookeeper://192.168.0.115:2181");
         dubboHandle.setTimeout(3000);
         dubboHandle.setGroupKey("xiaoyu");
         dubboHandle.setCommandKey("xiaoyu");
