@@ -10,13 +10,13 @@ spring:
        prefix: classpath:/static/
        suffix: .html
    datasource:
-     url: jdbc:mysql://localhost:3306/soul?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=CONVERT_TO_NULL&failOverReadOnly=false&autoReconnect=true
+     url: jdbc:mysql://127.0.0.1:3306/soul?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=CONVERT_TO_NULL&failOverReadOnly=false&autoReconnect=true
      username: root
-     password: 123456
+     password: root
      dbcp2:
        driver-class-name: com.mysql.jdbc.Driver
    zookeeper:
-     url : localhost:2181
+     url : 127.0.0.1:2181
      sessionTimeout: 5000
      connectionTimeout : 2000
      serializer : KryoSerializer
@@ -27,10 +27,10 @@ mybatis:
 
 logging:
     level:
-        root: info
-        org.springframework.boot: info
-        org.apache.ibatis: info
-        org.dromara.soul.bonuspoint: info
+        root: debug
+        org.springframework.boot: debug
+        org.apache.ibatis: debug
+        org.dromara.soul.bonuspoint: debug
         org.dromara.soul.lottery: debug
         org.dromara.soul: debug
 

@@ -35,12 +35,7 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * this is divide  http url upstream.
@@ -67,10 +62,13 @@ public class UpstreamCacheManager {
     private Integer scheduledTime;
 
     /**
+     * 功能说明：根据 selectorId 获取后续服务列表
      * Find upstream list by selector id list.
      *
      * @param selectorId the selector id
      * @return the list
+     * Author：spring
+     * Date：2019-03-30 09:03
      */
     public List<DivideUpstream> findUpstreamListBySelectorId(final String selectorId) {
         return UPSTREAM_MAP.get(selectorId);
@@ -96,10 +94,12 @@ public class UpstreamCacheManager {
                     new LinkedBlockingQueue<>(),
                     SoulThreadFactory.create("save-upstream-task", false));
 
+            // TODO: 2019-03-30 这里没看懂在干啥
             for (int i = 0; i < MAX_THREAD; i++) {
                 executorService.execute(new Worker());
             }
 
+            //定时检查后续调用服务的可用性,同时过滤掉不可用服务
             new ScheduledThreadPoolExecutor(MAX_THREAD,
                     SoulThreadFactory.create("scheduled-upstream-task", false))
                     .scheduleWithFixedDelay(this::scheduled,
@@ -135,12 +135,24 @@ public class UpstreamCacheManager {
         }
     }
 
+
+    /**
+     * 功能说明：定时检查后续调用服务的可用性,同时过滤掉不可用服务
+     * Author：spring
+     * Date：2019-03-30 08:49
+     */
     private void scheduled() {
         if (SCHEDULED_MAP.size() > 0) {
             SCHEDULED_MAP.forEach((k, v) -> UPSTREAM_MAP.put(k, check(v)));
         }
     }
 
+
+    /**
+     * 功能说明：过滤掉不可用后续调用服务
+     * Author：spring
+     * Date：2019-03-30 08:48
+     */
     private List<DivideUpstream> check(final List<DivideUpstream> upstreamList) {
         List<DivideUpstream> resultList = Lists.newArrayListWithCapacity(upstreamList.size());
         for (DivideUpstream divideUpstream : upstreamList) {

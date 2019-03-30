@@ -36,11 +36,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -117,13 +113,17 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
 
     @Override
     public void run(final String... args) {
-        loadWatcherPlugin();
-        loadWatcherSelector();
-        loadWatcherRule();
-        loadWatchAppAuth();
+
+        //1)读取zk中缓存的plugin数据节点;
+        //2)将zk数据缓存到plugin MAP中;
+        //3)并注册zk缓存节点更新和删除事件,同步更新plugin MAP数据;
+        loadPluginWatcher();
+        loadSelectorWatcher();
+        loadRuleWatcher();
+        loadAppAuthWatcher();
     }
 
-    private void loadWatchAppAuth() {
+    private void loadAppAuthWatcher() {
         final String appAuthParent = ZkPathConstants.APP_AUTH_PARENT;
         if (!zkClient.exists(appAuthParent)) {
             zkClient.createPersistent(appAuthParent, true);
@@ -164,17 +164,38 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
         });
     }
 
-    private void loadWatcherPlugin() {
+
+    /**
+     * 功能说明：
+     * 1)读取zk中缓存的plugin数据节点;
+     * 2)将zk数据缓存到plugin MAP中;
+     * 3)并注册zk缓存节点更新和删除事件,同步更新plugin MAP数据;
+     * <p>
+     * Author：spring
+     * Date：2019-03-30 10:01
+     */
+    private void loadPluginWatcher() {
         Arrays.stream(PluginEnum.values()).forEach(pluginEnum -> {
+
+            //初始化zk数据保存节点
             String pluginPath = ZkPathConstants.buildPluginPath(pluginEnum.getName());
             if (!zkClient.exists(pluginPath)) {
                 zkClient.createPersistent(pluginPath, true);
             }
+
+
+            //将插件数据缓存到PLUGIN_MAP
             PluginZkDTO data = zkClient.readData(pluginPath);
             Optional.ofNullable(data).ifPresent(d -> PLUGIN_MAP.put(pluginEnum.getName(), data));
+
+
+            //订阅zk相应节点数据更新事件
             zkClient.subscribeDataChanges(pluginPath, new IZkDataListener() {
+
+                //如果数据更新,则更新plugin缓存MAP
                 @Override
                 public void handleDataChange(final String dataPath, final Object data) {
+                    //如果数据更新,则更新plugin缓存MAP
                     Optional.ofNullable(data)
                             .ifPresent(o -> {
                                 PluginZkDTO dto = (PluginZkDTO) o;
@@ -182,6 +203,7 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                             });
                 }
 
+                //如果数据节点被删除,则删除相应plugin缓存
                 @Override
                 public void handleDataDeleted(final String dataPath) {
                     PLUGIN_MAP.remove(pluginEnum.getName());
@@ -191,7 +213,7 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
         });
     }
 
-    private void loadWatcherSelector() {
+    private void loadSelectorWatcher() {
         Arrays.stream(PluginEnum.values()).forEach(pluginEnum -> {
             //获取选择器的节点
             String selectorParentPath =
@@ -208,17 +230,21 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                     final SelectorZkDTO selectorZkDTO = zkClient.readData(realPath);
                     Optional.ofNullable(selectorZkDTO)
                             .ifPresent(dto -> {
-                                final String key = dto.getPluginName();
-                                setSelectorMapByKey(key, dto);
+                                final String pluginName = dto.getPluginName();
+                                //更新某个插件的SelectorZkDTO信息,每个插件都有多个SelectorZkDTO,并且设置plugin所有SelectorZkDTO的先后顺序;
+                                setSelectorMapByPluginName(pluginName, dto);
                             });
+                    //监听Selector数据更新、删除操作事件
                     subscribeSelectorDataChanges(realPath);
                 });
             }
 
+            //监听Selector 子节点数据更新、删除操作事件
             zkClient.subscribeChildChanges(selectorParentPath, (parentPath, currentChilds) -> {
                 if (CollectionUtils.isNotEmpty(currentChilds)) {
+                    // TODO: 2019-03-30 这里 unsubscribePath 方法需要结合zk数据仔细研究一下功能
                     final List<String> unsubscribePath = unsubscribePath(childrenList, currentChilds);
-                    unsubscribePath.stream().map(p -> buildRealPath(parentPath, p))
+                    unsubscribePath.stream().map(childrenPath -> buildRealPath(parentPath, childrenPath))
                             .forEach(this::subscribeSelectorDataChanges);
                 }
             });
@@ -226,7 +252,7 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
         });
     }
 
-    private void loadWatcherRule() {
+    private void loadRuleWatcher() {
         Arrays.stream(PluginEnum.values()).forEach(pluginEnum -> {
             final String ruleParent = ZkPathConstants.buildRuleParentPath(pluginEnum.getName());
             if (!zkClient.exists(ruleParent)) {
@@ -258,30 +284,43 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
     }
 
     /**
-     * set  SelectorMap by key.
+     * 功能说明：
+     * 1)更新某个插件的SelectorZkDTO信息,每个插件都有多个SelectorZkDTO,并且有先后顺序;
+     * set  SelectorMap by pluginName.
      *
-     * @param key           SELECTOR_MAP key.
+     * @param pluginName    SELECTOR_MAP pluginName.
      * @param selectorZkDTO data.
+     *                      Author：spring
+     *                      Date：2019-03-30 10:17
      */
-    private void setSelectorMapByKey(final String key, final SelectorZkDTO selectorZkDTO) {
-        Optional.ofNullable(key)
+    private void setSelectorMapByPluginName(final String pluginName, final SelectorZkDTO selectorZkDTO) {
+        Optional.ofNullable(pluginName)
                 .ifPresent(k -> {
+
+                    //向UpstreamCacheManager注册SelectorZkDTO
                     if (selectorZkDTO.getPluginName().equals(PluginEnum.DIVIDE.getName())) {
                         UpstreamCacheManager.submit(selectorZkDTO);
                     }
+
+                    //向SELECTOR_MAP添加SelectorZkDTO数据
                     if (SELECTOR_MAP.containsKey(k)) {
-                        final List<SelectorZkDTO> selectorZkDTOList = SELECTOR_MAP.get(key);
+                        final List<SelectorZkDTO> selectorZkDTOList = SELECTOR_MAP.get(pluginName);
+
+                        //由于这里是List,所以更新的时候采用了先过滤掉当前SelectorZkDTO
                         final List<SelectorZkDTO> resultList = selectorZkDTOList.stream()
                                 .filter(r -> !r.getId()
                                         .equals(selectorZkDTO.getId()))
                                 .collect(Collectors.toList());
+                        //再加上最新的SelectorZkDTO
                         resultList.add(selectorZkDTO);
+                        //最后根据Selector sort排序后再放入缓存MAP
                         final List<SelectorZkDTO> collect = resultList.stream()
                                 .sorted(Comparator.comparing(SelectorZkDTO::getSort))
                                 .collect(Collectors.toList());
-                        SELECTOR_MAP.put(key, collect);
+                        SELECTOR_MAP.put(pluginName, collect);
                     } else {
-                        SELECTOR_MAP.put(key, Lists.newArrayList(selectorZkDTO));
+                        //直接向SELECTOR_MAP添加SelectorZkDTO数据
+                        SELECTOR_MAP.put(pluginName, Lists.newArrayList(selectorZkDTO));
                     }
                 });
     }
@@ -290,14 +329,18 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
         zkClient.subscribeDataChanges(path, new IZkDataListener() {
             @Override
             public void handleDataChange(final String dataPath, final Object data) {
+                //处理SelectorZkDTO更新业务
                 Optional.ofNullable(data)
                         .ifPresent(d -> {
                             SelectorZkDTO dto = (SelectorZkDTO) d;
+                            //向UpstreamCacheManager注册SelectorZkDTO,用于负载均衡
                             if (dto.getPluginName().equals(PluginEnum.DIVIDE.getName())) {
                                 UpstreamCacheManager.submit(dto);
                             }
                             final String key = dto.getPluginName();
                             final List<SelectorZkDTO> selectorZkDTOList = SELECTOR_MAP.get(key);
+
+                            //根据pluginName更新SelectorZkDTO列表
                             if (CollectionUtils.isNotEmpty(selectorZkDTOList)) {
                                 final List<SelectorZkDTO> resultList =
                                         selectorZkDTOList.stream().filter(r -> !r.getId().equals(dto.getId())).collect(Collectors.toList());
@@ -312,6 +355,7 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                         });
             }
 
+            //处理SelectorZkDTO删除业务
             @Override
             public void handleDataDeleted(final String dataPath) {
                 //规定路径 key-id key为selectorId, id为规则id
@@ -320,6 +364,7 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                 final String key = str.substring(1, str.length() - id.length() - 1);
                 Optional.of(key).ifPresent(k -> {
                     final List<SelectorZkDTO> selectorZkDTOList = SELECTOR_MAP.get(k);
+                    //从当前plugin对应的selectorZkDTOList中移除该selectorZkDTO
                     selectorZkDTOList.removeIf(e -> e.getId().equals(id));
                 });
             }
@@ -387,11 +432,16 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
         });
     }
 
-    private List<String> unsubscribePath(final List<String> alreadyChildren, final List<String> currentChilds) {
-        if (CollectionUtils.isEmpty(alreadyChildren)) {
+    private List<String> unsubscribePath(final List<String> oldChildrens, final List<String> currentChilds) {
+        if (CollectionUtils.isEmpty(oldChildrens)) {
             return currentChilds;
         }
-        return currentChilds.stream().filter(c -> alreadyChildren.stream().anyMatch(a -> !c.equals(a))).collect(Collectors.toList());
+        List<String> latestChild = currentChilds.stream().filter(
+                currentChild -> oldChildrens.stream().anyMatch(
+                        oldChildren -> !currentChild.equals(oldChildren)
+                )
+        ).collect(Collectors.toList());
+        return latestChild;
     }
 
     private String buildRealPath(final String parent, final String children) {
@@ -402,4 +452,6 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
     public void destroy() {
         zkClient.close();
     }
+
+
 }

@@ -29,7 +29,7 @@ import java.io.Serializable;
  *
  * @author xiaoyu(Myth)
  * @version 1.0
- * @date 2018/5/8 17:29
+ * @date 2018-05-08 17:29
  * @since JDK 1.8
  */
 @Data

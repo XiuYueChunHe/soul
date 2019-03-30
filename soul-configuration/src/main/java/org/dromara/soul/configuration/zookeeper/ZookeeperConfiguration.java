@@ -33,9 +33,12 @@ import org.springframework.context.annotation.Configuration;
 public class ZookeeperConfiguration {
 
     /**
+     * 功能说明：实例化Zookeeper配置信息保存工具类
      * Zookeeper config zookeeper config.
      *
      * @return the zookeeper config
+     * Author：spring
+     * Date：2019-03-30 08:25
      */
     @Bean
     @ConfigurationProperties(prefix = "spring.zookeeper")
@@ -44,10 +47,13 @@ public class ZookeeperConfiguration {
     }
 
     /**
+     * 功能说明：向spring ioc 注册ZookeeperConfig客户端,这里是实现的自己自定义的客户端,主要是自定义ZkSerializer器
      * register zkClient in spring ioc.
      *
      * @param zookeeperConfig the zookeeper config
      * @return ZkClient {@linkplain ZkClient}
+     * Author：spring
+     * Date：2019-03-30 08:26
      */
     @Bean
     public ZkClient zkClient(ZookeeperConfig zookeeperConfig) {
