@@ -18,23 +18,12 @@
 
 package org.dromara.soul.common.utils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * GSONUtils.
@@ -42,9 +31,9 @@ import java.util.Set;
  * @author xiaoyu(Myth)
  */
 @SuppressWarnings("all")
-public class GSONUtils {
+public class GsonUtil {
 
-    private static final GSONUtils INSTANCE = new GSONUtils();
+    private static final GsonUtil INSTANCE = new GsonUtil();
 
     private static final Gson GSON = new Gson();
 
@@ -100,7 +89,7 @@ public class GSONUtils {
      *
      * @return the instance
      */
-    public static GSONUtils getInstance() {
+    public static GsonUtil getInstance() {
         return INSTANCE;
     }
 
@@ -110,7 +99,7 @@ public class GSONUtils {
      * @param object the object
      * @return the string
      */
-    public String toJson(final Object object) {
+    public static String toJson(final Object object) {
         return GSON.toJson(object);
     }
 
@@ -122,7 +111,7 @@ public class GSONUtils {
      * @param tClass the t class
      * @return the t
      */
-    public <T> T fromJson(final String json, final Class<T> tClass) {
+    public static <T> T fromJson(final String json, final Class<T> tClass) {
         return GSON.fromJson(json, tClass);
     }
 
@@ -134,7 +123,7 @@ public class GSONUtils {
      * @param cls    the cls
      * @return the list
      */
-    public <T> List<T> fromList(String string, Class<T[]> cls) {
+    public static <T> List<T> fromList(String string, Class<T[]> cls) {
         Gson gson = new Gson();
         T[] array = gson.fromJson(string, cls);
         return Arrays.asList(array);
@@ -147,7 +136,7 @@ public class GSONUtils {
      * @param json json
      * @return java.lang.String string
      */
-    public String toGetParam(final String json) {
+    public static String toGetParam(final String json) {
         if (StringUtils.isBlank(json)) {
             return "";
         }
@@ -165,7 +154,7 @@ public class GSONUtils {
      * @param json json
      * @return hashMap map
      */
-    public Map<String, String> toStringMap(final String json) {
+    public static Map<String, String> toStringMap(final String json) {
         return GSON.fromJson(json, new TypeToken<Map<String, String>>() {
         }.getType());
     }
@@ -177,7 +166,7 @@ public class GSONUtils {
      * @param json json
      * @return hashMap list
      */
-    public List<Map> toListMap(final String json) {
+    public static List<Map> toListMap(final String json) {
         return GSON.fromJson(json, new TypeToken<List<Map>>() {
         }.getType());
     }

@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 
 /**
  * LogUtils.
+ *
  * @author xiaoyu
  */
 public final class LogUtils {
@@ -37,6 +38,7 @@ public final class LogUtils {
 
     /**
      * getInstance.
+     *
      * @return LogUtils
      */
     public static LogUtils getInstance() {
@@ -46,6 +48,7 @@ public final class LogUtils {
 
     /**
      * debug log.
+     *
      * @param logger   logger
      * @param format   format
      * @param supplier {@linkplain Supplier}
@@ -58,12 +61,24 @@ public final class LogUtils {
 
     /**
      * debug log.
+     *
      * @param logger   logger
-     * @param supplier  {@linkplain Supplier}
+     * @param supplier {@linkplain Supplier}
      */
     public static void debug(final Logger logger, final Supplier<Object> supplier) {
         if (logger.isDebugEnabled()) {
             logger.debug(Objects.toString(supplier.get()));
+        }
+    }
+
+    /**
+     * 功能说明：添加String日志
+     * Author：spring
+     * Date：2019-04-02 16:28
+     */
+    public static void debug(final Logger logger, final String message) {
+        if (logger.isDebugEnabled()) {
+            logger.debug(message);
         }
     }
 
@@ -77,6 +92,17 @@ public final class LogUtils {
     public static void info(final Logger logger, final String format, final Supplier<Object> supplier) {
         if (logger.isInfoEnabled()) {
             logger.info(format, supplier.get());
+        }
+    }
+
+    /**
+     * 功能说明：添加String日志
+     * Author：spring
+     * Date：2019-04-02 16:28
+     */
+    public static void info(final Logger logger, final String message) {
+        if (logger.isInfoEnabled()) {
+            logger.info(message);
         }
     }
 

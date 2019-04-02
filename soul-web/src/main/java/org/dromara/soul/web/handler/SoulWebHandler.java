@@ -18,8 +18,12 @@
 
 package org.dromara.soul.web.handler;
 
+import org.dromara.soul.common.utils.GsonUtil;
+import org.dromara.soul.common.utils.LogUtils;
 import org.dromara.soul.web.plugin.SoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebHandler;
 import reactor.core.publisher.Mono;
@@ -33,6 +37,8 @@ import java.util.List;
  */
 public final class SoulWebHandler implements WebHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SoulWebHandler.class);
+
     private List<SoulPlugin> plugins;
 
     /**
@@ -41,6 +47,8 @@ public final class SoulWebHandler implements WebHandler {
      * @param plugins the plugins
      */
     public SoulWebHandler(final List<SoulPlugin> plugins) {
+        GsonUtil.toJson(plugins);
+        LogUtils.debug(LOGGER, "初始化SoulWebHandler");
         this.plugins = plugins;
     }
 
@@ -64,7 +72,7 @@ public final class SoulWebHandler implements WebHandler {
         private final List<SoulPlugin> plugins;
 
         /**
-         * Instantiates a new Default soul plugin chain.
+         * Instantiatesa new Default soul plugin chain.
          *
          * @param plugins the plugins
          */

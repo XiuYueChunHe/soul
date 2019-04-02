@@ -34,7 +34,7 @@ import org.dromara.soul.common.dto.convert.rule.DubboRuleHandle;
 import org.dromara.soul.common.dto.convert.selector.DubboSelectorHandle;
 import org.dromara.soul.common.enums.LoadBalanceEnum;
 import org.dromara.soul.common.exception.SoulException;
-import org.dromara.soul.common.utils.GSONUtils;
+import org.dromara.soul.common.utils.GsonUtil;
 import org.dromara.soul.common.utils.LogUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,8 +110,7 @@ public class DubboProxyService {
         //如果参数里面包含class字段
         //如果参数里面包含class字段
         if (paramMap.containsKey(DubboParamConstants.PARAM_CLASS)) {
-            List<String> clazz = GSONUtils.getInstance()
-                    .fromJson(paramMap.get(DubboParamConstants.PARAM_CLASS).toString(), List.class);
+            List<String> clazz = GsonUtil.fromJson(paramMap.get(DubboParamConstants.PARAM_CLASS).toString(), List.class);
             //设置参数为class 类型
             AtomicBoolean hasList = new AtomicBoolean(false);
             clazz.forEach(c -> {
@@ -123,22 +122,21 @@ public class DubboProxyService {
 
             if (hasList.get()) {
                 final Object classParams = paramMap.get(DubboParamConstants.CLASS_PARAMS);
-                List<Map> params = GSONUtils.getInstance().toListMap(classParams.toString());
+                List<Map> params = GsonUtil.toListMap(classParams.toString());
                 args.add(params);
             } else {
                 final Object classParams = paramMap.get(DubboParamConstants.CLASS_PARAMS);
-                args.addAll(GSONUtils.getInstance()
-                        .fromJson(classParams.toString(), List.class));
+                args.addAll(GsonUtil.fromJson(classParams.toString(), List.class));
             }
         }
         //如果Map参数里面包含 params字段  规定params 里面是json字符串转成Map key为类型，value为值
         if (paramMap.containsKey(DubboParamConstants.PARAMS)) {
             final Object params = paramMap.get(DubboParamConstants.PARAMS);
-            final Map<String, Object> objectMap = GSONUtils.getInstance().toObjectMap(params.toString());
+            final Map<String, Object> objectMap = GsonUtil.getInstance().toObjectMap(params.toString());
             objectMap.forEach((k, v) -> {
                 //如果v是数组类型
                 if (v instanceof List) {
-                    List<String> arg = GSONUtils.getInstance().fromJson(v.toString(), List.class);
+                    List<String> arg = GsonUtil.fromJson(v.toString(), List.class);
                     arg.forEach(j -> {
                         paramList.add(k);
                         args.add(j);
