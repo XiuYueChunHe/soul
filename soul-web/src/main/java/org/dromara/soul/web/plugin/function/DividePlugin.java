@@ -111,11 +111,9 @@ public class DividePlugin extends AbstractSoulPlugin {
             return chain.execute(exchange);
         }
 
-        HttpCommand command = new HttpCommand(HystrixBuilder.build(ruleHandle), exchange, chain,
-                requestDTO, buildRealURL(divideUpstream), ruleHandle.getTimeout());
+        HttpCommand command = new HttpCommand(HystrixBuilder.build(ruleHandle), exchange, chain, requestDTO, buildRealURL(divideUpstream), ruleHandle.getTimeout());
         return Mono.create((MonoSink<Object> s) -> {
-            Subscription sub = command.toObservable().subscribe(s::success,
-                    s::error, s::success);
+            Subscription sub = command.toObservable().subscribe(s::success, s::error, s::success);
             s.onCancel(sub::unsubscribe);
             if (command.isCircuitBreakerOpen()) {
                 LogUtils.error(LOGGER, () -> ruleHandle.getGroupKey() + "....http:circuitBreaker is Open.... !");
