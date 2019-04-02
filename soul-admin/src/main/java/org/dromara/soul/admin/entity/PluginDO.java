@@ -25,7 +25,6 @@ import org.dromara.soul.common.enums.PluginEnum;
 import org.dromara.soul.common.utils.UUIDUtils;
 
 import java.sql.Timestamp;
-import java.util.Date;
 
 /**
  * PluginDO.

@@ -23,9 +23,9 @@ import com.dyuproject.protostuff.ProtostuffIOUtil;
 import com.dyuproject.protostuff.Schema;
 import org.I0Itec.zkclient.exception.ZkMarshallingError;
 import org.I0Itec.zkclient.serialize.ZkSerializer;
-import org.dromara.soul.configuration.zookeeper.SerializerName;
 import org.dromara.soul.common.enums.SerializeEnum;
 import org.dromara.soul.common.exception.SerializerException;
+import org.dromara.soul.configuration.zookeeper.SerializerName;
 import org.objenesis.Objenesis;
 import org.objenesis.ObjenesisStd;
 
@@ -45,10 +45,6 @@ public class ProtostuffSerializer implements ZkSerializer, SerializerName {
 
     private static final Objenesis OBJENESIS = new ObjenesisStd(true);
 
-    private static <T> Schema<T> getSchema(final Class<T> cls) {
-        return (Schema<T>) CACHED_SCHEMA.get(cls);
-    }
-
     @Override
     public byte[] serialize(final Object obj) {
         Class cls = obj.getClass();
@@ -63,6 +59,10 @@ public class ProtostuffSerializer implements ZkSerializer, SerializerName {
             buffer.clear();
         }
         return outputStream.toByteArray();
+    }
+
+    private static <T> Schema<T> getSchema(final Class<T> cls) {
+        return (Schema<T>) CACHED_SCHEMA.get(cls);
     }
 
     @Override

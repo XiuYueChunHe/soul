@@ -31,10 +31,8 @@ public final class SoulThreadFactory implements ThreadFactory {
     private static final AtomicLong THREAD_NUMBER = new AtomicLong(1);
 
     private static final ThreadGroup THREAD_GROUP = new ThreadGroup("soul");
-
-    private boolean daemon;
-
     private final String namePrefix;
+    private boolean daemon;
 
     private SoulThreadFactory(final String namePrefix, final boolean daemon) {
         this.namePrefix = namePrefix;

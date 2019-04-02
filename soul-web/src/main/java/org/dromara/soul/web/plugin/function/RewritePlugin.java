@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin.function;
 
+import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.soul.common.constant.Constants;
 import org.dromara.soul.common.dto.convert.RewriteHandle;
@@ -28,6 +29,7 @@ import org.dromara.soul.common.enums.PluginTypeEnum;
 import org.dromara.soul.common.enums.RpcTypeEnum;
 import org.dromara.soul.common.utils.GsonUtil;
 import org.dromara.soul.common.utils.LogUtils;
+import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.plugin.AbstractSoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
@@ -59,16 +61,9 @@ public class RewritePlugin extends AbstractSoulPlugin {
      */
     public RewritePlugin(final ZookeeperCacheManager zookeeperCacheManager) {
         super(zookeeperCacheManager);
-    }
-
-    /**
-     * acquire plugin name.
-     *
-     * @return plugin name.
-     */
-    @Override
-    public String named() {
-        return PluginEnum.REWRITE.getName();
+        LogUtils.info(LOGGER, "实例化RewritePlugin", (a) -> U.lformat(
+                "zookeeperCacheManager", JSON.toJSON(zookeeperCacheManager)
+        ));
     }
 
     @Override
@@ -86,24 +81,34 @@ public class RewritePlugin extends AbstractSoulPlugin {
         return chain.execute(exchange);
     }
 
-    @Override
-    public Boolean skip(final ServerWebExchange exchange) {
-        final RequestDTO body = exchange.getAttribute(Constants.REQUESTDTO);
-        return Objects.equals(Objects.requireNonNull(body).getRpcType(), RpcTypeEnum.DUBBO.getName());
-    }
-
     /**
      * return plugin type.
      *
      * @return {@linkplain PluginTypeEnum}
      */
     @Override
-    public PluginTypeEnum pluginType() {
+    public PluginTypeEnum getPluginType() {
         return PluginTypeEnum.FUNCTION;
     }
 
     @Override
     public int getOrder() {
         return PluginEnum.REWRITE.getCode();
+    }
+
+    /**
+     * acquire plugin name.
+     *
+     * @return plugin name.
+     */
+    @Override
+    public String getNamed() {
+        return PluginEnum.REWRITE.getName();
+    }
+
+    @Override
+    public Boolean skip(final ServerWebExchange exchange) {
+        final RequestDTO body = exchange.getAttribute(Constants.REQUESTDTO);
+        return Objects.equals(Objects.requireNonNull(body).getRpcType(), RpcTypeEnum.DUBBO.getName());
     }
 }

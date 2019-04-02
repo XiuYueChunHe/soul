@@ -26,6 +26,7 @@ import java.io.Serializable;
 
 /**
  * ResultBean.
+ *
  * @author xiaoyu(Myth)
  */
 @Data

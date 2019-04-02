@@ -88,7 +88,7 @@ public class RoundRobinLoadBalance implements LoadBalance {
     }
 
     /**
-     *  get algorithm name.
+     * get algorithm name.
      *
      * @return algorithm name
      */

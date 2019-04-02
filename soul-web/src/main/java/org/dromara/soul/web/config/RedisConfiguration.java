@@ -46,23 +46,9 @@ import java.util.List;
  */
 @Configuration
 @AutoConfigureBefore(SoulConfiguration.class)
-@ConditionalOnClass({ RedisTemplate.class, DispatcherHandler.class })
+@ConditionalOnClass({RedisTemplate.class, DispatcherHandler.class})
 @SuppressWarnings("unchecked")
 public class RedisConfiguration {
-
-    /**
-     * init  RedisScript.
-     *
-     * @return {@linkplain RedisScript}
-     */
-    @Bean
-    @SuppressWarnings("unchecked")
-    public RedisScript redisScript() {
-        DefaultRedisScript redisScript = new DefaultRedisScript<>();
-        redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("/META-INF/scripts/request_rate_limiter.lua")));
-        redisScript.setResultType(List.class);
-        return redisScript;
-    }
 
     /**
      * init ReactiveRedisTemplate.
@@ -95,5 +81,19 @@ public class RedisConfiguration {
     @ConditionalOnMissingBean
     public RedisRateLimiter redisRateLimiter(@Qualifier("reactiveRedisTemplate") final ReactiveRedisTemplate<String, String> reactiveRedisTemplate) {
         return new RedisRateLimiter(reactiveRedisTemplate, redisScript());
+    }
+
+    /**
+     * init  RedisScript.
+     *
+     * @return {@linkplain RedisScript}
+     */
+    @Bean
+    @SuppressWarnings("unchecked")
+    public RedisScript redisScript() {
+        DefaultRedisScript redisScript = new DefaultRedisScript<>();
+        redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("/META-INF/scripts/request_rate_limiter.lua")));
+        redisScript.setResultType(List.class);
+        return redisScript;
     }
 }

@@ -56,16 +56,6 @@ public enum SerializeEnum {
     }
 
     /**
-     * get serialize.
-     *
-     * @return serialize
-     */
-    public String getSerialize() {
-        return serialize;
-    }
-
-
-    /**
      * Acquire serialize protocol serialize protocol enum.
      *
      * @param serialize the serialize protocol
@@ -78,5 +68,14 @@ public enum SerializeEnum {
                         .findFirst();
         return serializeEnum.orElse(SerializeEnum.KRYO);
 
+    }
+
+    /**
+     * get serialize.
+     *
+     * @return serialize
+     */
+    public String getSerialize() {
+        return serialize;
     }
 }

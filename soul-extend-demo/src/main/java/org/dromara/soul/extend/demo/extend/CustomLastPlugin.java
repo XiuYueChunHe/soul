@@ -28,8 +28,9 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /**
- *  This is your custom plugin.
- *  He is running in the end, implement your own functionality.
+ * This is your custom plugin.
+ * He is running in the end, implement your own functionality.
+ *
  * @author xiaoyu(Myth)
  */
 @Component
@@ -60,7 +61,7 @@ public class CustomLastPlugin implements SoulPlugin {
      * @return {@linkplain PluginTypeEnum}
      */
     @Override
-    public PluginTypeEnum pluginType() {
+    public PluginTypeEnum getPluginType() {
         return PluginTypeEnum.LAST;
     }
 
@@ -80,7 +81,7 @@ public class CustomLastPlugin implements SoulPlugin {
      * @return plugin name.
      */
     @Override
-    public String named() {
+    public String getNamed() {
         return "customLast";
     }
 }

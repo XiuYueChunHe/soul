@@ -83,22 +83,26 @@ public class SoulResult implements Serializable {
     /**
      * return success.
      *
-     * @param data this is result data.
-     * @return {@linkplain SoulResult}
-     */
-    public static SoulResult success(final Object data) {
-        return success(null, data);
-    }
-
-    /**
-     * return success.
-     *
      * @param msg  this ext msg.
      * @param data this is result data.
      * @return {@linkplain SoulResult}
      */
     public static SoulResult success(final String msg, final Object data) {
         return get(CommonErrorCode.SUCCESSFUL, msg, data);
+    }
+
+    private static SoulResult get(final int code, final String msg, final Object data) {
+        return new SoulResult(code, msg, data);
+    }
+
+    /**
+     * return success.
+     *
+     * @param data this is result data.
+     * @return {@linkplain SoulResult}
+     */
+    public static SoulResult success(final Object data) {
+        return success(null, data);
     }
 
     /**
@@ -122,7 +126,6 @@ public class SoulResult implements Serializable {
         return get(code, msg, null);
     }
 
-
     /**
      * return timeout .
      *
@@ -131,10 +134,6 @@ public class SoulResult implements Serializable {
      */
     public static SoulResult timeout(final String msg) {
         return error(HttpStatus.REQUEST_TIMEOUT.value(), msg);
-    }
-
-    private static SoulResult get(final int code, final String msg, final Object data) {
-        return new SoulResult(code, msg, data);
     }
 
 }

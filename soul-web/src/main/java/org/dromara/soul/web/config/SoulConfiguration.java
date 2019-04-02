@@ -18,6 +18,9 @@
 
 package org.dromara.soul.web.config;
 
+import com.alibaba.fastjson.JSON;
+import org.dromara.soul.common.utils.LogUtils;
+import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.cache.UpstreamCacheManager;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.disruptor.publisher.SoulEventPublisher;
@@ -35,6 +38,8 @@ import org.dromara.soul.web.plugin.function.DividePlugin;
 import org.dromara.soul.web.plugin.function.RateLimiterPlugin;
 import org.dromara.soul.web.plugin.function.RewritePlugin;
 import org.dromara.soul.web.plugin.ratelimter.RedisRateLimiter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -54,6 +59,8 @@ import java.util.stream.Collectors;
 @Configuration
 @ComponentScan("org.dromara.soul")
 public class SoulConfiguration {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SoulConfiguration.class);
 
     private final ZookeeperCacheManager zookeeperCacheManager;
 
@@ -79,6 +86,13 @@ public class SoulConfiguration {
         this.soulEventPublisher = soulEventPublisher;
         this.redisRateLimiter = redisRateLimiter;
         this.upstreamCacheManager = upstreamCacheManager;
+        LogUtils.info(LOGGER, "初始化SoulConfiguration", (a) -> U.lformat(
+                "zookeeperCacheManager", JSON.toJSON(zookeeperCacheManager),
+                "soulEventPublisher", JSON.toJSON(soulEventPublisher),
+                "redisRateLimiter", JSON.toJSON(redisRateLimiter),
+                "upstreamCacheManager", JSON.toJSON(upstreamCacheManager)
+        ));
+
     }
 
     /**
@@ -88,6 +102,7 @@ public class SoulConfiguration {
      */
     @Bean
     public SoulPlugin globalPlugin() {
+        LogUtils.info(LOGGER, "实例化GlobalPlugin");
         return new GlobalPlugin();
     }
 
@@ -99,6 +114,7 @@ public class SoulConfiguration {
      */
     @Bean
     public SoulPlugin signPlugin() {
+        LogUtils.info(LOGGER, "实例化SignPlugin");
         return new SignPlugin(zookeeperCacheManager);
     }
 
@@ -109,6 +125,7 @@ public class SoulConfiguration {
      */
     @Bean
     public SoulPlugin wafPlugin() {
+        LogUtils.info(LOGGER, "实例化WafPlugin");
         return new WafPlugin(zookeeperCacheManager);
     }
 
@@ -119,6 +136,7 @@ public class SoulConfiguration {
      */
     @Bean
     public SoulPlugin monitorPlugin() {
+        LogUtils.info(LOGGER, "实例化MonitorPlugin");
         return new MonitorPlugin(soulEventPublisher, zookeeperCacheManager);
     }
 
@@ -129,6 +147,7 @@ public class SoulConfiguration {
      */
     @Bean
     public SoulPlugin rateLimiterPlugin() {
+        LogUtils.info(LOGGER, "实例化RateLimiterPlugin");
         return new RateLimiterPlugin(zookeeperCacheManager, redisRateLimiter);
     }
 
@@ -139,6 +158,7 @@ public class SoulConfiguration {
      */
     @Bean
     public SoulPlugin rewritePlugin() {
+        LogUtils.info(LOGGER, "实例化RewritePlugin");
         return new RewritePlugin(zookeeperCacheManager);
     }
 
@@ -149,6 +169,7 @@ public class SoulConfiguration {
      */
     @Bean
     public SoulPlugin dividePlugin() {
+        LogUtils.info(LOGGER, "实例化DividePlugin");
         return new DividePlugin(zookeeperCacheManager, upstreamCacheManager);
     }
 
@@ -159,6 +180,7 @@ public class SoulConfiguration {
      */
     @Bean
     public SoulPlugin responsePlugin() {
+        LogUtils.info(LOGGER, "实例化ResponsePlugin");
         return new ResponsePlugin();
     }
 
@@ -170,12 +192,13 @@ public class SoulConfiguration {
      */
     @Bean
     public SoulWebHandler soulWebHandler(final List<SoulPlugin> plugins) {
+        LogUtils.info(LOGGER, "实例化SoulWebHandler");
         final List<SoulPlugin> soulPlugins = plugins.stream()
                 .sorted((m, n) -> {
-                    if (m.pluginType().equals(n.pluginType())) {
+                    if (m.getPluginType().equals(n.getPluginType())) {
                         return m.getOrder() - n.getOrder();
                     } else {
-                        return m.pluginType().getName().compareTo(n.pluginType().getName());
+                        return m.getPluginType().getName().compareTo(n.getPluginType().getName());
                     }
                 }).collect(Collectors.toList());
         return new SoulWebHandler(soulPlugins);
@@ -189,6 +212,7 @@ public class SoulConfiguration {
      */
     @Bean
     public SoulHandlerMapping soulHandlerMapping(final SoulWebHandler soulWebHandler) {
+        LogUtils.info(LOGGER, "实例化SoulHandlerMapping");
         return new SoulHandlerMapping(soulWebHandler);
     }
 
@@ -200,6 +224,7 @@ public class SoulConfiguration {
     @Bean
     @Order(1)
     public WebFilter paramWebFilter() {
+        LogUtils.info(LOGGER, "实例化ParamWebFilter");
         return new ParamWebFilter();
     }
 
@@ -212,6 +237,7 @@ public class SoulConfiguration {
     @Order(2)
     @ConditionalOnProperty(name = "soul.timeVerify.enabled", matchIfMissing = true)
     public WebFilter timeWebFilter() {
+        LogUtils.info(LOGGER, "实例化TimeWebFilter");
         return new TimeWebFilter();
     }
 }

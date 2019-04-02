@@ -30,7 +30,7 @@ import java.util.List;
  * @author xiaoyu(Mtyh)
  */
 public class OrMatchStrategy extends AbstractMatchStrategy implements MatchStrategy {
-    
+
     @Override
     public Boolean match(final List<ConditionZkDTO> conditionZkDTOList, final ServerWebExchange exchange) {
         return conditionZkDTOList

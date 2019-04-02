@@ -23,4 +23,4 @@ services:
     networks:
       - soul
 networks:
-   soul:
+  soul:

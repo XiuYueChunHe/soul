@@ -41,7 +41,7 @@ public class ConditionZkDTO implements Serializable {
     private String paramType;
 
     /**
-     *  =  like match.
+     * =  like match.
      */
     private String operator;
 

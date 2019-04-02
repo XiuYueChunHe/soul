@@ -132,16 +132,12 @@ public class HttpCommand extends HystrixObservableCommand<Void> {
         return Mono.empty();
     }
 
-    @Override
-    protected Observable<Void> resumeWithFallback() {
-        return RxReactiveStreams.toObservable(doFallback());
-    }
-
-    private MediaType buildMediaType() {
-        return MediaType.valueOf(Optional.ofNullable(exchange
-                .getRequest()
-                .getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
-                .orElse(MediaType.APPLICATION_JSON_UTF8_VALUE));
+    private String buildRealURL() {
+        final String rewriteURI = (String) exchange.getAttributes().get(Constants.REWRITE_URI);
+        if (StringUtils.isBlank(rewriteURI)) {
+            return String.join("/", url, requestDTO.getMethod());
+        }
+        return String.join("/", url, rewriteURI);
     }
 
     private Mono<Void> doNext(final ClientResponse res) {
@@ -154,12 +150,16 @@ public class HttpCommand extends HystrixObservableCommand<Void> {
         return chain.execute(exchange);
     }
 
-    private String buildRealURL() {
-        final String rewriteURI = (String) exchange.getAttributes().get(Constants.REWRITE_URI);
-        if (StringUtils.isBlank(rewriteURI)) {
-            return String.join("/", url, requestDTO.getMethod());
-        }
-        return String.join("/", url, rewriteURI);
+    private MediaType buildMediaType() {
+        return MediaType.valueOf(Optional.ofNullable(exchange
+                .getRequest()
+                .getHeaders().getFirst(HttpHeaders.CONTENT_TYPE))
+                .orElse(MediaType.APPLICATION_JSON_UTF8_VALUE));
+    }
+
+    @Override
+    protected Observable<Void> resumeWithFallback() {
+        return RxReactiveStreams.toObservable(doFallback());
     }
 
     private Mono<Void> doFallback() {

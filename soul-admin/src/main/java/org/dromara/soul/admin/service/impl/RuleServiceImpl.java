@@ -55,15 +55,11 @@ import java.util.stream.Collectors;
 @Service("ruleService")
 public class RuleServiceImpl implements RuleService {
 
-    private RuleMapper ruleMapper;
-
-    private RuleConditionMapper ruleConditionMapper;
-
-    private SelectorMapper selectorMapper;
-
-    private PluginMapper pluginMapper;
-
     private final ZkClient zkClient;
+    private RuleMapper ruleMapper;
+    private RuleConditionMapper ruleConditionMapper;
+    private SelectorMapper selectorMapper;
+    private PluginMapper pluginMapper;
 
     @Autowired(required = false)
     public RuleServiceImpl(final RuleMapper ruleMapper, final RuleConditionMapper ruleConditionMapper,

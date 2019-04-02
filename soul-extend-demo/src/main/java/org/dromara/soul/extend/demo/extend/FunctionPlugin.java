@@ -54,7 +54,7 @@ public class FunctionPlugin extends AbstractSoulPlugin {
      * @return {@linkplain PluginTypeEnum}
      */
     @Override
-    public PluginTypeEnum pluginType() {
+    public PluginTypeEnum getPluginType() {
         return PluginTypeEnum.FUNCTION;
     }
 
@@ -74,7 +74,7 @@ public class FunctionPlugin extends AbstractSoulPlugin {
      * @return plugin name.
      */
     @Override
-    public String named() {
+    public String getNamed() {
         return "waf";
     }
 

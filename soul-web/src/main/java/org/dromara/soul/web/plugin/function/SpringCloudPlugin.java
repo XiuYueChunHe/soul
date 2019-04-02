@@ -119,7 +119,7 @@ public class SpringCloudPlugin extends AbstractSoulPlugin {
     }
 
     @Override
-    public PluginTypeEnum pluginType() {
+    public PluginTypeEnum getPluginType() {
         return PluginTypeEnum.FUNCTION;
     }
 
@@ -129,7 +129,7 @@ public class SpringCloudPlugin extends AbstractSoulPlugin {
     }
 
     @Override
-    public String named() {
+    public String getNamed() {
         return PluginEnum.SPRING_CLOUD.getName();
     }
 

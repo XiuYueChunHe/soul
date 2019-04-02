@@ -48,15 +48,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author xiaoyu(Myth)
  */
 @Component
-public class  SoulEventPublisher implements InitializingBean, DisposableBean {
-
-    private Disruptor<SoulDataEvent> disruptor;
-
+public class SoulEventPublisher implements InitializingBean, DisposableBean {
     private final InfluxDbService influxDbService;
-
+    private Disruptor<SoulDataEvent> disruptor;
     @Value("${soul.disruptor.bufferSize:4096}")
     private int bufferSize;
-
     @Value("${soul.disruptor.threadSize:16}")
     private int threadSize;
 
@@ -68,6 +64,42 @@ public class  SoulEventPublisher implements InitializingBean, DisposableBean {
     @Autowired
     public SoulEventPublisher(final InfluxDbService influxDbService) {
         this.influxDbService = influxDbService;
+    }
+
+    public InfluxDbService getInfluxDbService() {
+        return influxDbService;
+    }
+
+    public Disruptor<SoulDataEvent> getDisruptor() {
+        return disruptor;
+    }
+
+    public int getBufferSize() {
+        return bufferSize;
+    }
+
+    public int getThreadSize() {
+        return threadSize;
+    }
+
+    /**
+     * publish disruptor event.
+     *
+     * @param monitorDO data.
+     */
+    public void publishEvent(final MonitorDO monitorDO) {
+        final RingBuffer<SoulDataEvent> ringBuffer = disruptor.getRingBuffer();
+        ringBuffer.publishEvent(new SoulEventTranslator(), monitorDO);
+    }
+
+    @Override
+    public void destroy() {
+        disruptor.shutdown();
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        start();
     }
 
     /**
@@ -91,25 +123,5 @@ public class  SoulEventPublisher implements InitializingBean, DisposableBean {
         disruptor.handleEventsWithWorkerPool(consumers);
         disruptor.setDefaultExceptionHandler(new IgnoreExceptionHandler());
         disruptor.start();
-    }
-
-    /**
-     * publish disruptor event.
-     *
-     * @param monitorDO data.
-     */
-    public void publishEvent(final MonitorDO monitorDO) {
-        final RingBuffer<SoulDataEvent> ringBuffer = disruptor.getRingBuffer();
-        ringBuffer.publishEvent(new SoulEventTranslator(), monitorDO);
-    }
-
-    @Override
-    public void destroy() {
-        disruptor.shutdown();
-    }
-
-    @Override
-    public void afterPropertiesSet() {
-        start();
     }
 }

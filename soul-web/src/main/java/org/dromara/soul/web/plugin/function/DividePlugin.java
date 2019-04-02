@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin.function;
 
+import com.alibaba.fastjson.JSON;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.soul.common.constant.Constants;
@@ -31,6 +32,7 @@ import org.dromara.soul.common.enums.ResultEnum;
 import org.dromara.soul.common.enums.RpcTypeEnum;
 import org.dromara.soul.common.utils.GsonUtil;
 import org.dromara.soul.common.utils.LogUtils;
+import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.balance.LoadBalance;
 import org.dromara.soul.web.balance.factory.LoadBalanceFactory;
 import org.dromara.soul.web.cache.UpstreamCacheManager;
@@ -72,6 +74,10 @@ public class DividePlugin extends AbstractSoulPlugin {
     public DividePlugin(final ZookeeperCacheManager zookeeperCacheManager, final UpstreamCacheManager upstreamCacheManager) {
         super(zookeeperCacheManager);
         this.upstreamCacheManager = upstreamCacheManager;
+        LogUtils.info(LOGGER, "实例化DividePlugin", (a) -> U.lformat(
+                "zookeeperCacheManager", JSON.toJSON(zookeeperCacheManager),
+                "upstreamCacheManager", JSON.toJSON(upstreamCacheManager)
+        ));
     }
 
     @Override
@@ -134,8 +140,23 @@ public class DividePlugin extends AbstractSoulPlugin {
         return protocol + divideUpstream.getUpstreamUrl().trim();
     }
 
+    /**
+     * return plugin type.
+     *
+     * @return {@linkplain PluginTypeEnum}
+     */
     @Override
-    public String named() {
+    public PluginTypeEnum getPluginType() {
+        return PluginTypeEnum.FUNCTION;
+    }
+
+    @Override
+    public int getOrder() {
+        return PluginEnum.DIVIDE.getCode();
+    }
+
+    @Override
+    public String getNamed() {
         return PluginEnum.DIVIDE.getName();
     }
 
@@ -148,21 +169,6 @@ public class DividePlugin extends AbstractSoulPlugin {
     public Boolean skip(final ServerWebExchange exchange) {
         final RequestDTO body = exchange.getAttribute(Constants.REQUESTDTO);
         return !Objects.equals(Objects.requireNonNull(body).getRpcType(), RpcTypeEnum.HTTP.getName());
-    }
-
-    /**
-     * return plugin type.
-     *
-     * @return {@linkplain PluginTypeEnum}
-     */
-    @Override
-    public PluginTypeEnum pluginType() {
-        return PluginTypeEnum.FUNCTION;
-    }
-
-    @Override
-    public int getOrder() {
-        return PluginEnum.DIVIDE.getCode();
     }
 
 }

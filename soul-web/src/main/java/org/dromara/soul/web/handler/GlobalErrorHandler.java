@@ -26,11 +26,7 @@ import org.springframework.boot.autoconfigure.web.reactive.error.DefaultErrorWeb
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.reactive.function.server.RequestPredicates;
-import org.springframework.web.reactive.function.server.RouterFunction;
-import org.springframework.web.reactive.function.server.RouterFunctions;
-import org.springframework.web.reactive.function.server.ServerRequest;
-import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.reactive.function.server.*;
 
 import java.util.Map;
 
@@ -63,6 +59,14 @@ public class GlobalErrorHandler extends DefaultErrorWebExceptionHandler {
         return response(HttpStatus.INTERNAL_SERVER_ERROR.value());
     }
 
+    private static Map<String, Object> response(final int status) {
+        Map<String, Object> map = Maps.newHashMapWithExpectedSize(3);
+        map.put("code", status);
+        map.put("message", CommonErrorCode.ERROR_MSG);
+        map.put("data", null);
+        return map;
+    }
+
     @Override
     protected RouterFunction<ServerResponse> getRoutingFunction(final ErrorAttributes errorAttributes) {
         return RouterFunctions.route(RequestPredicates.all(), this::renderErrorResponse);
@@ -72,14 +76,6 @@ public class GlobalErrorHandler extends DefaultErrorWebExceptionHandler {
     protected HttpStatus getHttpStatus(final Map<String, Object> errorAttributes) {
         int statusCode = (int) errorAttributes.get("code");
         return HttpStatus.valueOf(statusCode);
-    }
-
-    private static Map<String, Object> response(final int status) {
-        Map<String, Object> map = Maps.newHashMapWithExpectedSize(3);
-        map.put("code", status);
-        map.put("message", CommonErrorCode.ERROR_MSG);
-        map.put("data", null);
-        return map;
     }
 
 }

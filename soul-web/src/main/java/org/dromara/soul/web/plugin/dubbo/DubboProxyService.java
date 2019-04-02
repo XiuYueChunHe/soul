@@ -104,6 +104,50 @@ public class DubboProxyService {
         }
     }
 
+    private ReferenceConfig<GenericService> buildReferenceConfig(final DubboSelectorHandle dubboSelectorHandle, final DubboRuleHandle dubboRuleHandle, final String interfaceName) {
+
+        ReferenceConfig<GenericService> reference = new ReferenceConfig<>();
+
+        reference.setGeneric(true);
+
+        final ApplicationConfig applicationConfig = cacheApplication(dubboSelectorHandle.getAppName());
+
+        reference.setApplication(applicationConfig);
+
+        reference.setRegistry(cacheRegistry(dubboSelectorHandle.getAppName(), dubboSelectorHandle.getRegistry()));
+
+        reference.setInterface(interfaceName);
+
+        if (StringUtils.isNoneBlank(dubboSelectorHandle.getProtocol())) {
+            reference.setProtocol(dubboSelectorHandle.getProtocol());
+        }
+
+        if (StringUtils.isNoneBlank(dubboRuleHandle.getVersion())) {
+            reference.setVersion(dubboRuleHandle.getVersion());
+        }
+
+        if (StringUtils.isNoneBlank(dubboRuleHandle.getGroup())) {
+            reference.setGroup(dubboRuleHandle.getGroup());
+        }
+
+        if (StringUtils.isNoneBlank(dubboRuleHandle.getLoadBalance())) {
+            final String loadBalance = dubboRuleHandle.getLoadBalance();
+            if (LoadBalanceEnum.HASH.getName().equals(loadBalance)) {
+                reference.setLoadbalance("consistenthash");
+            } else if (LoadBalanceEnum.ROUND_ROBIN.getName().equals(loadBalance)) {
+                reference.setLoadbalance("roundrobin");
+            } else {
+                reference.setLoadbalance(loadBalance);
+            }
+        }
+
+        Optional.ofNullable(dubboRuleHandle.getTimeout()).ifPresent(reference::setTimeout);
+
+        Optional.ofNullable(dubboRuleHandle.getRetries()).ifPresent(reference::setRetries);
+
+        return reference;
+    }
+
     private Pair<String[], Object[]> buildParameter(final Map<String, Object> paramMap) {
         List<String> paramList = Lists.newArrayList();
         List<Object> args = Lists.newArrayList();
@@ -148,50 +192,6 @@ public class DubboProxyService {
             });
         }
         return new ImmutablePair<>(paramList.toArray(new String[0]), args.toArray());
-    }
-
-    private ReferenceConfig<GenericService> buildReferenceConfig(final DubboSelectorHandle dubboSelectorHandle, final DubboRuleHandle dubboRuleHandle, final String interfaceName) {
-
-        ReferenceConfig<GenericService> reference = new ReferenceConfig<>();
-
-        reference.setGeneric(true);
-
-        final ApplicationConfig applicationConfig = cacheApplication(dubboSelectorHandle.getAppName());
-
-        reference.setApplication(applicationConfig);
-
-        reference.setRegistry(cacheRegistry(dubboSelectorHandle.getAppName(), dubboSelectorHandle.getRegistry()));
-
-        reference.setInterface(interfaceName);
-
-        if (StringUtils.isNoneBlank(dubboSelectorHandle.getProtocol())) {
-            reference.setProtocol(dubboSelectorHandle.getProtocol());
-        }
-
-        if (StringUtils.isNoneBlank(dubboRuleHandle.getVersion())) {
-            reference.setVersion(dubboRuleHandle.getVersion());
-        }
-
-        if (StringUtils.isNoneBlank(dubboRuleHandle.getGroup())) {
-            reference.setGroup(dubboRuleHandle.getGroup());
-        }
-
-        if (StringUtils.isNoneBlank(dubboRuleHandle.getLoadBalance())) {
-            final String loadBalance = dubboRuleHandle.getLoadBalance();
-            if (LoadBalanceEnum.HASH.getName().equals(loadBalance)) {
-                reference.setLoadbalance("consistenthash");
-            } else if (LoadBalanceEnum.ROUND_ROBIN.getName().equals(loadBalance)) {
-                reference.setLoadbalance("roundrobin");
-            } else {
-                reference.setLoadbalance(loadBalance);
-            }
-        }
-
-        Optional.ofNullable(dubboRuleHandle.getTimeout()).ifPresent(reference::setTimeout);
-
-        Optional.ofNullable(dubboRuleHandle.getRetries()).ifPresent(reference::setRetries);
-
-        return reference;
     }
 
     private ApplicationConfig cacheApplication(final String appName) {

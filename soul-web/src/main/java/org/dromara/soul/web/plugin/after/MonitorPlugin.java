@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin.after;
 
+import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.soul.common.constant.Constants;
 import org.dromara.soul.common.dto.zk.RuleZkDTO;
@@ -25,12 +26,16 @@ import org.dromara.soul.common.dto.zk.SelectorZkDTO;
 import org.dromara.soul.common.enums.PluginEnum;
 import org.dromara.soul.common.enums.PluginTypeEnum;
 import org.dromara.soul.common.enums.ResultEnum;
+import org.dromara.soul.common.utils.LogUtils;
+import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.disruptor.publisher.SoulEventPublisher;
 import org.dromara.soul.web.influxdb.entity.MonitorDO;
 import org.dromara.soul.web.plugin.AbstractSoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
 import org.dromara.soul.web.request.RequestDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -42,6 +47,8 @@ import java.util.Objects;
  * @author xiaoyu(Myth)
  */
 public class MonitorPlugin extends AbstractSoulPlugin {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MonitorPlugin.class);
 
     private final SoulEventPublisher soulEventPublisher;
 
@@ -55,22 +62,17 @@ public class MonitorPlugin extends AbstractSoulPlugin {
                          final ZookeeperCacheManager zookeeperCacheManager) {
         super(zookeeperCacheManager);
         this.soulEventPublisher = soulEventPublisher;
+        LogUtils.info(LOGGER, "实例化MonitorPlugin", (a) -> U.lformat(
+                "soulEventPublisher", JSON.toJSON(soulEventPublisher),
+                "zookeeperCacheManager", JSON.toJSON(zookeeperCacheManager)
+        ));
+
     }
 
     @Override
     protected Mono<Void> doExecute(final ServerWebExchange exchange, final SoulPluginChain chain, final SelectorZkDTO selector, final RuleZkDTO rule) {
         soulEventPublisher.publishEvent(buildMonitorData(exchange));
         return chain.execute(exchange);
-    }
-
-    @Override
-    public String named() {
-        return PluginEnum.MONITOR.getName();
-    }
-
-    @Override
-    public int getOrder() {
-        return PluginEnum.MONITOR.getCode();
     }
 
     private MonitorDO buildMonitorData(final ServerWebExchange exchange) {
@@ -97,7 +99,17 @@ public class MonitorPlugin extends AbstractSoulPlugin {
      * @return {@linkplain PluginTypeEnum}
      */
     @Override
-    public PluginTypeEnum pluginType() {
+    public PluginTypeEnum getPluginType() {
         return PluginTypeEnum.LAST;
+    }
+
+    @Override
+    public int getOrder() {
+        return PluginEnum.MONITOR.getCode();
+    }
+
+    @Override
+    public String getNamed() {
+        return PluginEnum.MONITOR.getName();
     }
 }

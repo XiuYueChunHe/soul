@@ -31,10 +31,8 @@ import java.security.CodeSource;
 public class VersionUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VersionUtils.class);
-
-    private static final String VERSION = getVersion(VersionUtils.class, "1.0.0");
-
     private static final String JAR = ".jar";
+    private static final String VERSION = getVersion(VersionUtils.class, "1.0.0");
 
     private VersionUtils() {
     }

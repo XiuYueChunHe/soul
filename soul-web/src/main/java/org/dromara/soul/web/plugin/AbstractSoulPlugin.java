@@ -58,18 +58,6 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
     private final ZookeeperCacheManager zookeeperCacheManager;
 
     /**
-     * this is Template Method child has Implement your own logic.
-     *
-     * @param exchange exchange the current server exchange {@linkplain ServerWebExchange}
-     * @param chain    chain the current chain  {@linkplain ServerWebExchange}
-     * @param selector selector    {@linkplain SelectorZkDTO}
-     * @param rule     rule    {@linkplain RuleZkDTO}
-     * @return {@code Mono<Void>} to indicate when request handling is complete
-     */
-    protected abstract Mono<Void> doExecute(ServerWebExchange exchange, SoulPluginChain chain, SelectorZkDTO selector, RuleZkDTO rule);
-
-
-    /**
      * Process the Web request and (optionally) delegate to the next
      * {@code WebFilter} through the given {@link SoulPluginChain}.
      *
@@ -79,10 +67,10 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
      */
     @Override
     public Mono<Void> execute(final ServerWebExchange exchange, final SoulPluginChain chain) {
-        final PluginZkDTO pluginZkDTO = zookeeperCacheManager.findPluginByName(named());
+        final PluginZkDTO pluginZkDTO = zookeeperCacheManager.findPluginByName(getNamed());
         if (!(skip(exchange) || pluginZkDTO == null || !pluginZkDTO.getEnabled())) {
             //获取selector
-            final List<SelectorZkDTO> selectors = zookeeperCacheManager.findSelectorByPluginName(named());
+            final List<SelectorZkDTO> selectors = zookeeperCacheManager.findSelectorByPluginName(getNamed());
             if (CollectionUtils.isEmpty(selectors)) {
                 return chain.execute(exchange);
             }
@@ -95,8 +83,8 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
             }
 
             if (selectorZkDTO.getLoged()) {
-                LogUtils.info(LOGGER, named()
-                        + " selector success selector name :{}", selectorZkDTO::getName);
+                LogUtils.info(LOGGER, getNamed()
+                        + " selector success selector name :{}", selectorZkDTO.getName());
             }
             final List<RuleZkDTO> rules =
                     zookeeperCacheManager.findRuleBySelectorId(selectorZkDTO.getId());
@@ -110,11 +98,11 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
 
             if (Objects.isNull(rule)) {
                 //If the divide or dubbo or spring cloud plug-in does not match, return directly
-                if (PluginEnum.DIVIDE.getName().equals(named())
-                        || PluginEnum.DUBBO.getName().equals(named())
-                        || PluginEnum.SPRING_CLOUD.getName().equals(named())) {
+                if (PluginEnum.DIVIDE.getName().equals(getNamed())
+                        || PluginEnum.DUBBO.getName().equals(getNamed())
+                        || PluginEnum.SPRING_CLOUD.getName().equals(getNamed())) {
                     LogUtils.info(LOGGER, () -> Objects.requireNonNull(request).getModule() + ":"
-                            + request.getMethod() + " not match  " + named() + "  rule");
+                            + request.getMethod() + " not match  " + getNamed() + "  rule");
                     final SoulResult error = SoulResult.error(HttpStatus.NOT_FOUND.value(),
                             Constants.UPSTREAM_NOT_FIND);
                     return exchange.getResponse()
@@ -125,7 +113,7 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
             }
 
             if (rule.getLoged()) {
-                LogUtils.info(LOGGER, () -> Objects.requireNonNull(request).getModule() + ":" + request.getMethod() + " match " + named()
+                LogUtils.info(LOGGER, () -> Objects.requireNonNull(request).getModule() + ":" + request.getMethod() + " match " + getNamed()
                         + " rule is name :"
                         + rule.getName());
             }
@@ -152,4 +140,15 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
                         .match(ruleZkDTO.getConditionZkDTOList(), exchange))
                 .findFirst().orElse(null);
     }
+
+    /**
+     * this is Template Method child has Implement your own logic.
+     *
+     * @param exchange exchange the current server exchange {@linkplain ServerWebExchange}
+     * @param chain    chain the current chain  {@linkplain ServerWebExchange}
+     * @param selector selector    {@linkplain SelectorZkDTO}
+     * @param rule     rule    {@linkplain RuleZkDTO}
+     * @return {@code Mono<Void>} to indicate when request handling is complete
+     */
+    protected abstract Mono<Void> doExecute(ServerWebExchange exchange, SoulPluginChain chain, SelectorZkDTO selector, RuleZkDTO rule);
 }

@@ -18,6 +18,11 @@
 
 package org.dromara.soul.web.handler;
 
+import com.alibaba.fastjson.JSON;
+import org.dromara.soul.common.utils.LogUtils;
+import org.dromara.soul.common.utils.U;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.reactive.handler.AbstractHandlerMapping;
 import org.springframework.web.server.ServerWebExchange;
@@ -30,6 +35,8 @@ import reactor.core.publisher.Mono;
  */
 public final class SoulHandlerMapping extends AbstractHandlerMapping {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SoulHandlerMapping.class);
+
     private final SoulWebHandler soulWebHandler;
 
     /**
@@ -40,6 +47,9 @@ public final class SoulHandlerMapping extends AbstractHandlerMapping {
     public SoulHandlerMapping(final SoulWebHandler soulWebHandler) {
         this.soulWebHandler = soulWebHandler;
         setOrder(1);
+        LogUtils.info(LOGGER, "实例化SoulHandlerMapping", (a) -> U.lformat(
+                "soulWebHandler", JSON.toJSON(soulWebHandler)
+        ));
     }
 
     @Override

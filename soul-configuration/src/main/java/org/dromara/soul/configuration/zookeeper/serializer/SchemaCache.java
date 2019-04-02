@@ -46,14 +46,6 @@ public class SchemaCache {
         return SchemaCacheHolder.cache;
     }
 
-    private Schema<?> get(final Class<?> cls, final Cache<Class<?>, Schema<?>> cache) {
-        try {
-            return cache.get(cls, () -> RuntimeSchema.createFrom(cls));
-        } catch (ExecutionException e) {
-            return null;
-        }
-    }
-
     /**
      * acquire Schema with class.
      *
@@ -62,6 +54,14 @@ public class SchemaCache {
      */
     public Schema<?> get(final Class<?> clazz) {
         return get(clazz, cache);
+    }
+
+    private Schema<?> get(final Class<?> cls, final Cache<Class<?>, Schema<?>> cache) {
+        try {
+            return cache.get(cls, () -> RuntimeSchema.createFrom(cls));
+        } catch (ExecutionException e) {
+            return null;
+        }
     }
 
     private static class SchemaCacheHolder {

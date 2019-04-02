@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin.function;
 
+import com.alibaba.fastjson.JSON;
 import org.dromara.soul.common.constant.Constants;
 import org.dromara.soul.common.dto.convert.RateLimiterHandle;
 import org.dromara.soul.common.dto.zk.RuleZkDTO;
@@ -27,10 +28,14 @@ import org.dromara.soul.common.enums.PluginTypeEnum;
 import org.dromara.soul.common.result.SoulResult;
 import org.dromara.soul.common.utils.GsonUtil;
 import org.dromara.soul.common.utils.JsonUtils;
+import org.dromara.soul.common.utils.LogUtils;
+import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.plugin.AbstractSoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
 import org.dromara.soul.web.plugin.ratelimter.RedisRateLimiter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -43,6 +48,7 @@ import java.util.Objects;
  * @author xiaoyu(Myth)
  */
 public class RateLimiterPlugin extends AbstractSoulPlugin {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RateLimiterPlugin.class);
 
     private final RedisRateLimiter redisRateLimiter;
 
@@ -56,11 +62,10 @@ public class RateLimiterPlugin extends AbstractSoulPlugin {
                              final RedisRateLimiter redisRateLimiter) {
         super(zookeeperCacheManager);
         this.redisRateLimiter = redisRateLimiter;
-    }
-
-    @Override
-    public String named() {
-        return PluginEnum.RATE_LIMITER.getName();
+        LogUtils.info(LOGGER, "实例化RateLimiterPlugin", (a) -> U.lformat(
+                "redisRateLimiter", JSON.toJSON(redisRateLimiter),
+                "zookeeperCacheManager", JSON.toJSON(zookeeperCacheManager)
+        ));
     }
 
     /**
@@ -69,13 +74,18 @@ public class RateLimiterPlugin extends AbstractSoulPlugin {
      * @return {@linkplain PluginTypeEnum}
      */
     @Override
-    public PluginTypeEnum pluginType() {
+    public PluginTypeEnum getPluginType() {
         return PluginTypeEnum.FUNCTION;
     }
 
     @Override
     public int getOrder() {
         return PluginEnum.RATE_LIMITER.getCode();
+    }
+
+    @Override
+    public String getNamed() {
+        return PluginEnum.RATE_LIMITER.getName();
     }
 
     @Override

@@ -102,7 +102,7 @@ public class ResponsePlugin implements SoulPlugin {
      * @return {@linkplain PluginTypeEnum}
      */
     @Override
-    public PluginTypeEnum pluginType() {
+    public PluginTypeEnum getPluginType() {
         return PluginTypeEnum.LAST;
     }
 
@@ -117,7 +117,7 @@ public class ResponsePlugin implements SoulPlugin {
      * @return plugin name.
      */
     @Override
-    public String named() {
+    public String getNamed() {
         return "SoulResponse";
     }
 

@@ -23,9 +23,9 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.I0Itec.zkclient.exception.ZkMarshallingError;
 import org.I0Itec.zkclient.serialize.ZkSerializer;
-import org.dromara.soul.configuration.zookeeper.SerializerName;
 import org.dromara.soul.common.enums.SerializeEnum;
 import org.dromara.soul.common.exception.SerializerException;
+import org.dromara.soul.configuration.zookeeper.SerializerName;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,6 +34,7 @@ import java.io.IOException;
 
 /**
  * KryoSerializer.
+ *
  * @author xiaoyu
  */
 public class KryoSerializer implements ZkSerializer, SerializerName {

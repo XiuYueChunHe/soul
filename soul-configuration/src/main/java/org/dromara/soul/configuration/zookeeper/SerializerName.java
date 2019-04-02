@@ -20,6 +20,7 @@ package org.dromara.soul.configuration.zookeeper;
 
 /**
  * acquire serializer name .
+ *
  * @author xiaoyu(Myth)
  */
 public interface SerializerName {

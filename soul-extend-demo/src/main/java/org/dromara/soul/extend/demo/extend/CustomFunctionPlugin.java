@@ -29,14 +29,17 @@ import reactor.core.publisher.Mono;
 
 
 /**
- *  This is your custom plugin.
- *  He is running in after before plugin, implement your own functionality.
+ * This is your custom plugin.
+ * He is running in after before plugin, implement your own functionality.
+ *
  * @author xiaoyu(Myth)
  */
 @Component
 public class CustomFunctionPlugin implements SoulPlugin {
 
-    /** logger. */
+    /**
+     * logger.
+     */
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomFunctionPlugin.class);
 
     /**
@@ -59,7 +62,7 @@ public class CustomFunctionPlugin implements SoulPlugin {
      * @return {@linkplain PluginTypeEnum}
      */
     @Override
-    public PluginTypeEnum pluginType() {
+    public PluginTypeEnum getPluginType() {
         return PluginTypeEnum.FUNCTION;
     }
 
@@ -79,7 +82,7 @@ public class CustomFunctionPlugin implements SoulPlugin {
      * @return plugin name.
      */
     @Override
-    public String named() {
+    public String getNamed() {
         return "customFunction";
     }
 }

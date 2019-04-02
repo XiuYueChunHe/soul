@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin.before;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.soul.common.constant.Constants;
@@ -30,6 +31,7 @@ import org.dromara.soul.common.result.SoulResult;
 import org.dromara.soul.common.utils.JsonUtils;
 import org.dromara.soul.common.utils.LogUtils;
 import org.dromara.soul.common.utils.SignUtils;
+import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.plugin.AbstractSoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
@@ -62,16 +64,10 @@ public class SignPlugin extends AbstractSoulPlugin {
     public SignPlugin(final ZookeeperCacheManager zookeeperCacheManager) {
         super(zookeeperCacheManager);
         this.zookeeperCacheManager = zookeeperCacheManager;
-    }
+        LogUtils.info(LOGGER, "实例化SignPlugin", (a) -> U.lformat(
+                "zookeeperCacheManager", JSON.toJSON(zookeeperCacheManager)
+        ));
 
-    @Override
-    public String named() {
-        return PluginEnum.SIGN.getName();
-    }
-
-    @Override
-    public int getOrder() {
-        return PluginEnum.SIGN.getCode();
     }
 
     @Override
@@ -94,8 +90,8 @@ public class SignPlugin extends AbstractSoulPlugin {
      * @return result : True is pass, False is not pass.
      */
     private Boolean signVerify(final RequestDTO requestDTO) {
-        if(StringUtils.isBlank(requestDTO.getAppKey())){
-            LogUtils.error(LOGGER, () ->  " app key can not incoming!");
+        if (StringUtils.isBlank(requestDTO.getAppKey())) {
+            LogUtils.error(LOGGER, () -> " app key can not incoming!");
             return false;
         }
         final AppAuthZkDTO appAuthZkDTO = zookeeperCacheManager.findAuthDTOByAppKey(requestDTO.getAppKey());
@@ -112,16 +108,6 @@ public class SignPlugin extends AbstractSoulPlugin {
                 buildParamsMap(requestDTO), appAuthZkDTO.getAppSecret());
     }
 
-    /**
-     * return plugin type.
-     *
-     * @return {@linkplain PluginTypeEnum}
-     */
-    @Override
-    public PluginTypeEnum pluginType() {
-        return PluginTypeEnum.BEFORE;
-    }
-
     private Map<String, String> buildParamsMap(final RequestDTO dto) {
         Map<String, String> map = Maps.newHashMapWithExpectedSize(4);
         map.put(Constants.TIMESTAMP, dto.getTimestamp());
@@ -129,6 +115,26 @@ public class SignPlugin extends AbstractSoulPlugin {
         map.put(Constants.METHOD, dto.getMethod());
         map.put(Constants.RPC_TYPE, dto.getRpcType());
         return map;
+    }
+
+    /**
+     * return plugin type.
+     *
+     * @return {@linkplain PluginTypeEnum}
+     */
+    @Override
+    public PluginTypeEnum getPluginType() {
+        return PluginTypeEnum.BEFORE;
+    }
+
+    @Override
+    public int getOrder() {
+        return PluginEnum.SIGN.getCode();
+    }
+
+    @Override
+    public String getNamed() {
+        return PluginEnum.SIGN.getName();
     }
 
 }

@@ -23,18 +23,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.soul.admin.dto.PluginDTO;
 import org.dromara.soul.admin.entity.PluginDO;
-import org.dromara.soul.admin.mapper.PluginMapper;
-import org.dromara.soul.admin.mapper.RuleConditionMapper;
-import org.dromara.soul.admin.mapper.RuleMapper;
-import org.dromara.soul.admin.mapper.SelectorConditionMapper;
-import org.dromara.soul.admin.mapper.SelectorMapper;
+import org.dromara.soul.admin.mapper.*;
 import org.dromara.soul.admin.page.CommonPager;
 import org.dromara.soul.admin.page.PageParameter;
-import org.dromara.soul.admin.query.PluginQuery;
-import org.dromara.soul.admin.query.RuleConditionQuery;
-import org.dromara.soul.admin.query.RuleQuery;
-import org.dromara.soul.admin.query.SelectorConditionQuery;
-import org.dromara.soul.admin.query.SelectorQuery;
+import org.dromara.soul.admin.query.*;
 import org.dromara.soul.admin.service.PluginService;
 import org.dromara.soul.admin.vo.PluginVO;
 import org.dromara.soul.common.constant.ZkPathConstants;
@@ -60,14 +52,10 @@ public class PluginServiceImpl implements PluginService {
     private final PluginMapper pluginMapper;
 
     private final SelectorMapper selectorMapper;
-
-    private SelectorConditionMapper selectorConditionMapper;
-
     private final RuleMapper ruleMapper;
-
     private final RuleConditionMapper ruleConditionMapper;
-
     private final ZkClient zkClient;
+    private SelectorConditionMapper selectorConditionMapper;
 
     @Autowired(required = false)
     public PluginServiceImpl(final PluginMapper pluginMapper, final SelectorMapper selectorMapper, final SelectorConditionMapper selectorConditionMapper,

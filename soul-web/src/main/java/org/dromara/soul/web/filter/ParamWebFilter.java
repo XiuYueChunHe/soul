@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.filter;
 
+import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.soul.common.constant.Constants;
 import org.dromara.soul.common.constant.DubboParamConstants;
@@ -61,7 +62,7 @@ public class ParamWebFilter extends AbstractWebFilter {
         response.setStatusCode(HttpStatus.BAD_REQUEST);
         final SoulResult result = SoulResult.error("you param is error please check with doc!");
         return response.writeWith(Mono.just(response.bufferFactory()
-                .wrap(GsonUtil.toJson(result).getBytes())));
+                .wrap(JSON.toJSON(result).toString().getBytes())));
     }
 
     private Boolean verify(final RequestDTO requestDTO, final ServerWebExchange exchange) {

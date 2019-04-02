@@ -42,16 +42,13 @@ public class HttpTest extends BaseTest {
      * logger
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpTest.class);
-
-
+    private static final ExecutorService EXECUTE_SERVICE = Executors.newFixedThreadPool(300);
     @Autowired(required = false)
     private WebTestClient webTestClient;
 
-    private static final ExecutorService EXECUTE_SERVICE = Executors.newFixedThreadPool(300);
-
     @Test
     public void testHttp() throws InterruptedException {
-        String body="{\n" +
+        String body = "{\n" +
                 "\t\"domain\": \"GB\",\n" +
                 "\t\"accessToken\": \"576861360e1344ba9b6de1992f60b28a\",\n" +
                 "\t\"version\": \"3.0\",\n" +
@@ -63,7 +60,7 @@ public class HttpTest extends BaseTest {
                 "}";
         for (int i = 0; i < 1; i++) {
 
-            EXECUTE_SERVICE.execute(()->  webTestClient.post()
+            EXECUTE_SERVICE.execute(() -> webTestClient.post()
                     .headers(this::buildGetHttpHeaders)
                     .contentType(MediaType.APPLICATION_JSON_UTF8)
                     .body(BodyInserters.fromObject(body))
@@ -81,13 +78,13 @@ public class HttpTest extends BaseTest {
 
     private void buildGetHttpHeaders(HttpHeaders httpHeaders) {
         httpHeaders.set("module", "performance_es");
-        httpHeaders.set("method","price");
-        httpHeaders.set("httpMethod","post");
-        httpHeaders.set("rpcType","http");
-        httpHeaders.set("sign","D48C690C1B1FD5447BD4CCFF3F0C69F4");
-        httpHeaders.set("appKey","xiaoyu");
-        httpHeaders.set("timestamp","2018-06-06 08:30:10");
-        httpHeaders.set("extInfo","{\"age\":\"27\",\"name\":\"xiaoyu\"}");
+        httpHeaders.set("method", "price");
+        httpHeaders.set("httpMethod", "post");
+        httpHeaders.set("rpcType", "http");
+        httpHeaders.set("sign", "D48C690C1B1FD5447BD4CCFF3F0C69F4");
+        httpHeaders.set("appKey", "xiaoyu");
+        httpHeaders.set("timestamp", "2018-06-06 08:30:10");
+        httpHeaders.set("extInfo", "{\"age\":\"27\",\"name\":\"xiaoyu\"}");
     }
 
 
@@ -101,7 +98,6 @@ public class HttpTest extends BaseTest {
                 .expectStatus().is4xxClientError();
 
     }
-
 
 
     @Test

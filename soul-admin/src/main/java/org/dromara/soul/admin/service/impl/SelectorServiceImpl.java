@@ -27,11 +27,7 @@ import org.dromara.soul.admin.entity.PluginDO;
 import org.dromara.soul.admin.entity.RuleDO;
 import org.dromara.soul.admin.entity.SelectorConditionDO;
 import org.dromara.soul.admin.entity.SelectorDO;
-import org.dromara.soul.admin.mapper.PluginMapper;
-import org.dromara.soul.admin.mapper.RuleConditionMapper;
-import org.dromara.soul.admin.mapper.RuleMapper;
-import org.dromara.soul.admin.mapper.SelectorConditionMapper;
-import org.dromara.soul.admin.mapper.SelectorMapper;
+import org.dromara.soul.admin.mapper.*;
 import org.dromara.soul.admin.page.CommonPager;
 import org.dromara.soul.admin.page.PageParameter;
 import org.dromara.soul.admin.query.RuleConditionQuery;
@@ -59,17 +55,12 @@ import java.util.stream.Collectors;
 @Service("selectorService")
 public class SelectorServiceImpl implements SelectorService {
 
-    private SelectorMapper selectorMapper;
-
-    private SelectorConditionMapper selectorConditionMapper;
-
     private final RuleMapper ruleMapper;
-
     private final RuleConditionMapper ruleConditionMapper;
-
-    private PluginMapper pluginMapper;
-
     private final ZkClient zkClient;
+    private SelectorMapper selectorMapper;
+    private SelectorConditionMapper selectorConditionMapper;
+    private PluginMapper pluginMapper;
 
     @Autowired(required = false)
     public SelectorServiceImpl(final SelectorMapper selectorMapper, final SelectorConditionMapper selectorConditionMapper,

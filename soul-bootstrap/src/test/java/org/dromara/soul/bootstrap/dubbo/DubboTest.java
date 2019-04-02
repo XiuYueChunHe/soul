@@ -40,17 +40,14 @@ public class DubboTest extends BaseTest {
      * logger
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpTest.class);
-
-
+    private static final ExecutorService EXECUTE_SERVICE = Executors.newFixedThreadPool(20);
     @Autowired(required = false)
     private WebTestClient webTestClient;
-
-    private static final ExecutorService EXECUTE_SERVICE = Executors.newFixedThreadPool(20);
 
     @Test
     public void testDubbo() throws InterruptedException {
 
-        String request="{\"rpcType\": \"dubbo\"," +
+        String request = "{\"rpcType\": \"dubbo\"," +
                 " \"module\": \"pdm\", \"appKey\": \"gateway\", \"method\": \"helloWorld\", " +
                 "\"sign\": \"29E6EDC0331B799E7EED3CAE98E37B62\", " +
                 "\"timestamp\": \"2018-05-14 09:20:10\", " +
@@ -59,7 +56,7 @@ public class DubboTest extends BaseTest {
                 "              \"paramClass\": [\"com.hqyg.skyway.test.dubbo.api.entity.DubboTest\",  \"com.hqyg.skyway.test.dubbo.api.entity.DubboTest\"], \"classParams\": [{ \"id\": \"1\",\"name\": \"x\" } ] }}";
         for (int i = 0; i < 10000; i++) {
 
-            EXECUTE_SERVICE.execute(()->  webTestClient.post()
+            EXECUTE_SERVICE.execute(() -> webTestClient.post()
                     .contentType(MediaType.APPLICATION_JSON_UTF8)
                     .body(BodyInserters.fromObject(request))
                     .accept(MediaType.APPLICATION_JSON_UTF8)

@@ -46,7 +46,7 @@ public interface SoulPlugin {
      *
      * @return {@linkplain PluginTypeEnum}
      */
-    PluginTypeEnum pluginType();
+    PluginTypeEnum getPluginType();
 
     /**
      * return plugin order .
@@ -63,7 +63,7 @@ public interface SoulPlugin {
      *
      * @return plugin name.
      */
-    String named();
+    String getNamed();
 
     /**
      * plugin is execute.

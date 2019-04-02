@@ -31,9 +31,8 @@ import java.util.concurrent.Executor;
  */
 public class SoulDataHandler implements WorkHandler<SoulDataEvent> {
 
-    private Executor executor;
-
     private final InfluxDbService influxDbService;
+    private Executor executor;
 
     /**
      * Instantiates a new Soul data handler.

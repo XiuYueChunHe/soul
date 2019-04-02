@@ -44,22 +44,65 @@ import java.util.concurrent.*;
  */
 @Component
 public class UpstreamCacheManager {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(UpstreamCacheManager.class);
-
     private static final BlockingQueue<SelectorZkDTO> BLOCKING_QUEUE = new LinkedBlockingQueue<>(1024);
-
     private static final int MAX_THREAD = Runtime.getRuntime().availableProcessors() << 1;
-
     private static final Map<String, List<DivideUpstream>> UPSTREAM_MAP = Maps.newConcurrentMap();
-
     private static final Map<String, List<DivideUpstream>> SCHEDULED_MAP = Maps.newConcurrentMap();
-
     @Value("${soul.upstream.delayInit:30}")
     private Integer delayInit;
-
     @Value("${soul.upstream.scheduledTime:10}")
     private Integer scheduledTime;
+
+    public static Logger getLOGGER() {
+        return LOGGER;
+    }
+
+    public static BlockingQueue<SelectorZkDTO> getBlockingQueue() {
+        return BLOCKING_QUEUE;
+    }
+
+    public static int getMaxThread() {
+        return MAX_THREAD;
+    }
+
+    public static Map<String, List<DivideUpstream>> getUpstreamMap() {
+        return UPSTREAM_MAP;
+    }
+
+    public static Map<String, List<DivideUpstream>> getScheduledMap() {
+        return SCHEDULED_MAP;
+    }
+
+    /**
+     * Remove by key.
+     *
+     * @param key the key
+     */
+    static void removeByKey(final String key) {
+        UPSTREAM_MAP.remove(key);
+    }
+
+    /**
+     * Submit.
+     *
+     * @param selectorZkDTO the selector zk dto
+     */
+    static void submit(final SelectorZkDTO selectorZkDTO) {
+        try {
+            BLOCKING_QUEUE.put(selectorZkDTO);
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    public Integer getDelayInit() {
+        return delayInit;
+    }
+
+    public Integer getScheduledTime() {
+        return scheduledTime;
+    }
 
     /**
      * 功能说明：根据 selectorId 获取后续服务列表
@@ -72,15 +115,6 @@ public class UpstreamCacheManager {
      */
     public List<DivideUpstream> findUpstreamListBySelectorId(final String selectorId) {
         return UPSTREAM_MAP.get(selectorId);
-    }
-
-    /**
-     * Remove by key.
-     *
-     * @param key the key
-     */
-    static void removeByKey(final String key) {
-        UPSTREAM_MAP.remove(key);
     }
 
     /**
@@ -107,35 +141,6 @@ public class UpstreamCacheManager {
         }
     }
 
-
-    /**
-     * Submit.
-     *
-     * @param selectorZkDTO the selector zk dto
-     */
-    static void submit(final SelectorZkDTO selectorZkDTO) {
-        try {
-            BLOCKING_QUEUE.put(selectorZkDTO);
-        } catch (InterruptedException e) {
-            LOGGER.error(e.getMessage());
-        }
-    }
-
-    /**
-     * Execute.
-     *
-     * @param selectorZkDTO the selector zk dto
-     */
-    public void execute(final SelectorZkDTO selectorZkDTO) {
-        final List<DivideUpstream> upstreamList =
-                GsonUtil.fromList(selectorZkDTO.getHandle(), DivideUpstream[].class);
-        if (CollectionUtils.isNotEmpty(upstreamList)) {
-            SCHEDULED_MAP.put(selectorZkDTO.getId(), upstreamList);
-            UPSTREAM_MAP.put(selectorZkDTO.getId(), check(upstreamList));
-        }
-    }
-
-
     /**
      * 功能说明：定时检查后续调用服务的可用性,同时过滤掉不可用服务
      * Author：spring
@@ -146,7 +151,6 @@ public class UpstreamCacheManager {
             SCHEDULED_MAP.forEach((k, v) -> UPSTREAM_MAP.put(k, check(v)));
         }
     }
-
 
     /**
      * 功能说明：过滤掉不可用后续调用服务
@@ -162,6 +166,20 @@ public class UpstreamCacheManager {
             }
         }
         return resultList;
+    }
+
+    /**
+     * Execute.
+     *
+     * @param selectorZkDTO the selector zk dto
+     */
+    public void execute(final SelectorZkDTO selectorZkDTO) {
+        final List<DivideUpstream> upstreamList =
+                GsonUtil.fromList(selectorZkDTO.getHandle(), DivideUpstream[].class);
+        if (CollectionUtils.isNotEmpty(upstreamList)) {
+            SCHEDULED_MAP.put(selectorZkDTO.getId(), upstreamList);
+            UPSTREAM_MAP.put(selectorZkDTO.getId(), check(upstreamList));
+        }
     }
 
     /**

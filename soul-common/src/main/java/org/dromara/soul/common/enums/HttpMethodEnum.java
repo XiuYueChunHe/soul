@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 /**
  * this is http method support.
+ *
  * @author xiaoyu(Myth)
  */
 @RequiredArgsConstructor
@@ -57,7 +58,7 @@ public enum HttpMethodEnum {
     private final Boolean support;
 
     /**
-     *  convert by name.
+     * convert by name.
      *
      * @param name name
      * @return {@link HttpMethodEnum }

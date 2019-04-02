@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * ResultEnum.
+ *
  * @author xiaoyu(Myth)
  */
 @RequiredArgsConstructor
@@ -42,7 +43,8 @@ public enum ResultEnum {
     /**
      * Error result enum.
      */
-    ERROR("error"),;
+    ERROR("error"),
+    ;
 
     private final String name;
 

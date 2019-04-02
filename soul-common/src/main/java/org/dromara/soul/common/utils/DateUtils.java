@@ -22,7 +22,6 @@ package org.dromara.soul.common.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -41,6 +40,13 @@ public class DateUtils {
 
     private static final String DATE_FORMAT_DATETIME = "yyyy-MM-dd HH:mm:ss";
 
+    public static Date getDateYYYY() {
+        LocalDateTime localDateTime = parseLocalDateTime(getCurrentDateTime());
+        ZoneId zone = ZoneId.systemDefault();
+        Instant instant = localDateTime.atZone(zone).toInstant();
+        return Date.from(instant);
+    }
+
     /**
      * parseLocalDateTime.
      * out put format:yyyy-MM-dd HH:mm:ss
@@ -51,13 +57,6 @@ public class DateUtils {
      */
     public static LocalDateTime parseLocalDateTime(final String str) {
         return LocalDateTime.parse(str, DateTimeFormatter.ofPattern(DATE_FORMAT_DATETIME));
-    }
-
-    public static Date getDateYYYY() {
-        LocalDateTime localDateTime = parseLocalDateTime(getCurrentDateTime());
-        ZoneId zone = ZoneId.systemDefault();
-        Instant instant = localDateTime.atZone(zone).toInstant();
-        return Date.from(instant);
     }
 
     public static String getCurrentDateTime() {

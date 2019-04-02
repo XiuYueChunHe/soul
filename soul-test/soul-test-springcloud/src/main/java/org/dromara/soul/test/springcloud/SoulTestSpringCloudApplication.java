@@ -24,6 +24,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 /**
  * SoulTestSpringCloudApplication.
+ *
  * @author xiaoyu
  */
 @SpringBootApplication

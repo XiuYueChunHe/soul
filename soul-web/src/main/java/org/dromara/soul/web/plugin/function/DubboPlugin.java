@@ -113,14 +113,28 @@ public class DubboPlugin extends AbstractSoulPlugin {
         }).then();
     }
 
+    private boolean checkData(final DubboSelectorHandle dubboSelectorHandle) {
+        if (StringUtils.isBlank(dubboSelectorHandle.getRegistry())
+                || StringUtils.isBlank(dubboSelectorHandle.getAppName())) {
+            LogUtils.error(LOGGER, () -> "dubbo handle require param not config!");
+            return false;
+        }
+        return true;
+    }
+
     /**
      * return plugin type.
      *
      * @return {@linkplain PluginTypeEnum}
      */
     @Override
-    public PluginTypeEnum pluginType() {
+    public PluginTypeEnum getPluginType() {
         return PluginTypeEnum.FUNCTION;
+    }
+
+    @Override
+    public int getOrder() {
+        return PluginEnum.DUBBO.getCode();
     }
 
     /**
@@ -129,7 +143,7 @@ public class DubboPlugin extends AbstractSoulPlugin {
      * @return plugin name.
      */
     @Override
-    public String named() {
+    public String getNamed() {
         return PluginEnum.DUBBO.getName();
     }
 
@@ -144,20 +158,6 @@ public class DubboPlugin extends AbstractSoulPlugin {
         final RequestDTO body = exchange.getAttribute(Constants.REQUESTDTO);
         assert body != null;
         return !Objects.equals(body.getRpcType(), RpcTypeEnum.DUBBO.getName());
-    }
-
-    @Override
-    public int getOrder() {
-        return PluginEnum.DUBBO.getCode();
-    }
-
-    private boolean checkData(final DubboSelectorHandle dubboSelectorHandle) {
-        if (StringUtils.isBlank(dubboSelectorHandle.getRegistry())
-                || StringUtils.isBlank(dubboSelectorHandle.getAppName())) {
-            LogUtils.error(LOGGER, () -> "dubbo handle require param not config!");
-            return false;
-        }
-        return true;
     }
 
 }

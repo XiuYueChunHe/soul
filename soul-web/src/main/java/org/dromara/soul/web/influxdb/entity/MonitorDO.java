@@ -41,11 +41,11 @@ public class MonitorDO implements Serializable {
     private Integer count;
 
     /**
-     *  success /error /timeout.
+     * success /error /timeout.
      */
     private String resultType;
 
     private String rpcType;
-    
+
 
 }

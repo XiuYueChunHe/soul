@@ -23,13 +23,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * SoulTestHttpApplication.
+ *
  * @author xiaoyu
  */
 @SpringBootApplication
 public class SoulTestHttpApplication {
 
     /**
-     *  main.
+     * main.
+     *
      * @param args args
      */
     public static void main(final String[] args) {

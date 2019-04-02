@@ -18,8 +18,9 @@
 
 package org.dromara.soul.web.handler;
 
-import org.dromara.soul.common.utils.GsonUtil;
+import com.alibaba.fastjson.JSON;
 import org.dromara.soul.common.utils.LogUtils;
+import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.plugin.SoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
 import org.slf4j.Logger;
@@ -47,8 +48,8 @@ public final class SoulWebHandler implements WebHandler {
      * @param plugins the plugins
      */
     public SoulWebHandler(final List<SoulPlugin> plugins) {
-        GsonUtil.toJson(plugins);
-        LogUtils.debug(LOGGER, "初始化SoulWebHandler");
+        JSON.toJSON(plugins);
+        LogUtils.info(LOGGER, "初始化SoulWebHandler", (a) -> U.lformat("plugins", JSON.toJSON(plugins)));
         this.plugins = plugins;
     }
 
@@ -67,9 +68,8 @@ public final class SoulWebHandler implements WebHandler {
 
     private static class DefaultSoulPluginChain implements SoulPluginChain {
 
-        private int index;
-
         private final List<SoulPlugin> plugins;
+        private int index;
 
         /**
          * Instantiatesa new Default soul plugin chain.

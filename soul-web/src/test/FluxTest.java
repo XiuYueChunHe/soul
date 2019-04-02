@@ -8,18 +8,20 @@ import java.util.Optional;
 public class FluxTest {
 
 
-    public static void sout(String msg) {
-        System.out.println(msg);
+    public static void main(String[] args) {
+        FluxTest fluxTest = new FluxTest();
+        fluxTest.test007();
+        try {
+            Thread.sleep(2000);
+        } catch (Exception e) {
+
+        }
     }
 
-    public static <T> void sout(T msg) {
-        System.out.println(msg);
+    public void test007() {
+        Flux.range(1, 100).reduce((x, y) -> x + y).subscribe(System.out::println);
+        Flux.range(1, 100).reduceWith(() -> 100, (x, y) -> x + y).subscribe(System.out::println);
     }
-
-    public static void sout(Integer msg) {
-        System.out.println(msg);
-    }
-
 
     public void test001() {
 
@@ -31,6 +33,17 @@ public class FluxTest {
 
     }
 
+    public static void sout(String msg) {
+        System.out.println(msg);
+    }
+
+    public static void sout(Integer msg) {
+        System.out.println(msg);
+    }
+
+    public static <T> void sout(T msg) {
+        System.out.println(msg);
+    }
 
     public void test002() {
 
@@ -78,23 +91,8 @@ public class FluxTest {
         Flux.range(1, 1000).takeUntil(i -> i % 20 == 0).subscribe(System.out::println);
     }
 
-    public void test007() {
-        Flux.range(1, 100).reduce((x, y) -> x + y).subscribe(System.out::println);
-        Flux.range(1, 100).reduceWith(() -> 100, (x, y) -> x + y).subscribe(System.out::println);
-    }
-
     public void test008() {
         Flux.range(1, 100).reduce((x, y) -> x + y).subscribe(System.out::println);
         Flux.range(1, 100).reduceWith(() -> 100, (x, y) -> x + y).subscribe(System.out::println);
-    }
-
-    public static void main(String[] args) {
-        FluxTest fluxTest = new FluxTest();
-        fluxTest.test007();
-        try {
-            Thread.sleep(2000);
-        } catch (Exception e) {
-
-        }
     }
 }

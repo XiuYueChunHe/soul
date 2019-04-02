@@ -73,6 +73,15 @@ public final class UUIDUtils {
         this.idepoch = idepoch;
     }
 
+    /**
+     * generate short uuid.
+     *
+     * @return short uuid.
+     */
+    public static String generateShortUuid() {
+        return String.valueOf(new UUIDUtils().nextId());
+    }
+
     private synchronized long nextId() {
         long timestamp = timeGen();
         if (timestamp < lastTimestamp) {
@@ -94,24 +103,15 @@ public final class UUIDUtils {
                 | (workerId << WORKER_ID_SHIFT) | sequence;
     }
 
+    private long timeGen() {
+        return System.currentTimeMillis();
+    }
+
     private long tilNextMillis(final long lastTimestamp) {
         long timestamp = timeGen();
         while (timestamp <= lastTimestamp) {
             timestamp = timeGen();
         }
         return timestamp;
-    }
-
-    private long timeGen() {
-        return System.currentTimeMillis();
-    }
-
-    /**
-     * generate short uuid.
-     *
-     * @return short uuid.
-     */
-    public static String generateShortUuid() {
-        return String.valueOf(new UUIDUtils().nextId());
     }
 }

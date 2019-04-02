@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin.before;
 
+import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.soul.common.constant.Constants;
 import org.dromara.soul.common.dto.convert.WafHandle;
@@ -30,6 +31,7 @@ import org.dromara.soul.common.result.SoulResult;
 import org.dromara.soul.common.utils.GsonUtil;
 import org.dromara.soul.common.utils.JsonUtils;
 import org.dromara.soul.common.utils.LogUtils;
+import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.plugin.AbstractSoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
@@ -61,16 +63,9 @@ public class WafPlugin extends AbstractSoulPlugin {
      */
     public WafPlugin(final ZookeeperCacheManager zookeeperCacheManager) {
         super(zookeeperCacheManager);
-    }
-
-    /**
-     * acquire plugin name.
-     *
-     * @return plugin name.
-     */
-    @Override
-    public String named() {
-        return PluginEnum.WAF.getName();
+        LogUtils.info(LOGGER, "实例化WafPlugin", (a) -> U.lformat(
+                "zookeeperCacheManager", JSON.toJSON(zookeeperCacheManager)
+        ));
     }
 
     @Override
@@ -102,12 +97,22 @@ public class WafPlugin extends AbstractSoulPlugin {
      * @return {@linkplain PluginTypeEnum}
      */
     @Override
-    public PluginTypeEnum pluginType() {
+    public PluginTypeEnum getPluginType() {
         return PluginTypeEnum.BEFORE;
     }
 
     @Override
     public int getOrder() {
         return PluginEnum.WAF.getCode();
+    }
+
+    /**
+     * acquire plugin name.
+     *
+     * @return plugin name.
+     */
+    @Override
+    public String getNamed() {
+        return PluginEnum.WAF.getName();
     }
 }

@@ -29,8 +29,9 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /**
- *  This is your custom plugin.
- *  Before all plugins, implement your own functionality.
+ * This is your custom plugin.
+ * Before all plugins, implement your own functionality.
+ *
  * @author xiaoyu(Myth)
  */
 @Component
@@ -61,7 +62,7 @@ public class CustomBeforePlugin implements SoulPlugin {
      * @return {@linkplain PluginTypeEnum}
      */
     @Override
-    public PluginTypeEnum pluginType() {
+    public PluginTypeEnum getPluginType() {
         return PluginTypeEnum.BEFORE;
     }
 
@@ -81,7 +82,7 @@ public class CustomBeforePlugin implements SoulPlugin {
      * @return plugin name.
      */
     @Override
-    public String named() {
+    public String getNamed() {
         return "custom before";
     }
 }

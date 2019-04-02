@@ -54,9 +54,7 @@ public final class LogUtils {
      * @param supplier {@linkplain Supplier}
      */
     public static void debug(final Logger logger, final String format, final Supplier<Object> supplier) {
-        if (logger.isDebugEnabled()) {
-            logger.debug(format, supplier.get());
-        }
+        logger.debug(format, supplier.get());
     }
 
     /**
@@ -66,9 +64,7 @@ public final class LogUtils {
      * @param supplier {@linkplain Supplier}
      */
     public static void debug(final Logger logger, final Supplier<Object> supplier) {
-        if (logger.isDebugEnabled()) {
-            logger.debug(Objects.toString(supplier.get()));
-        }
+        logger.debug(Objects.toString(supplier.get()));
     }
 
     /**
@@ -77,23 +73,64 @@ public final class LogUtils {
      * Date：2019-04-02 16:28
      */
     public static void debug(final Logger logger, final String message) {
-        if (logger.isDebugEnabled()) {
-            logger.debug(message);
-        }
+        logger.debug(message);
     }
 
     /**
-     * info log.
-     *
-     * @param logger   logger
-     * @param format   format
-     * @param supplier {@linkplain Supplier}
+     * 功能说明：普通 debug 日志
+     * Author：spring
+     * Date：2019-04-02 17:14
      */
-    public static void info(final Logger logger, final String format, final Supplier<Object> supplier) {
-        if (logger.isInfoEnabled()) {
-            logger.info(format, supplier.get());
-        }
+    public static void debug(final Logger logger, org.dromara.soul.common.utils.Supplier<String> msg) {
+        logger.debug(msg.lazyformat());
     }
+
+    /**
+     * 功能说明：普通 debug 日志
+     * Author：spring
+     * Date：2019-04-02 17:14
+     */
+    public static void debug(final Logger logger, String remark, org.dromara.soul.common.utils.Supplier<String> msg) {
+        logger.debug(remark + "," + msg.lazyformat());
+    }
+
+    /**
+     * 功能说明：普通 info 日志
+     * Author：spring
+     * Date：2019-04-02 17:14
+     */
+    public static void info(final Logger logger, org.dromara.soul.common.utils.Supplier<String> msg) {
+        logger.info(msg.lazyformat());
+    }
+
+    /**
+     * 功能说明：普通 info 日志
+     * Author：spring
+     * Date：2019-04-02 17:14
+     */
+    public static void info(final Logger logger, String remark, org.dromara.soul.common.utils.Supplier<String> msg) {
+        logger.info(remark + "," + msg.lazyformat());
+    }
+
+    /**
+     * 功能说明：重载方法
+     * Author：spring
+     * Date：2017-12-15 11:53
+     */
+    public static void info(final Logger logger, Object... msgs) {
+        StringBuilder tmp = new StringBuilder();
+        for (Object msg : msgs) {
+            if (msg != null) {
+                tmp.append(msg.toString()).append(",");
+            }
+        }
+        int len = tmp.length();
+        if (len > 0) {
+            tmp = tmp.replace(len - 1, len, "");
+        }
+        logger.info(tmp.toString());
+    }
+
 
     /**
      * 功能说明：添加String日志
@@ -101,9 +138,7 @@ public final class LogUtils {
      * Date：2019-04-02 16:28
      */
     public static void info(final Logger logger, final String message) {
-        if (logger.isInfoEnabled()) {
-            logger.info(message);
-        }
+        logger.info(message);
     }
 
     /**
@@ -113,9 +148,7 @@ public final class LogUtils {
      * @param supplier {@linkplain Supplier}
      */
     public static void info(final Logger logger, final Supplier<Object> supplier) {
-        if (logger.isInfoEnabled()) {
-            logger.info(Objects.toString(supplier.get()));
-        }
+        logger.info(Objects.toString(supplier.get()));
     }
 
     /**
@@ -126,9 +159,7 @@ public final class LogUtils {
      * @param supplier {@linkplain Supplier}
      */
     public static void error(final Logger logger, final String format, final Supplier<Object> supplier) {
-        if (logger.isErrorEnabled()) {
-            logger.error(format, supplier.get());
-        }
+        logger.error(format, supplier.get());
     }
 
     /**
@@ -138,9 +169,7 @@ public final class LogUtils {
      * @param supplier {@linkplain Supplier}
      */
     public static void error(final Logger logger, final Supplier<Object> supplier) {
-        if (logger.isErrorEnabled()) {
-            logger.error(Objects.toString(supplier.get()));
-        }
+        logger.error(Objects.toString(supplier.get()));
     }
 
     /**
@@ -151,9 +180,7 @@ public final class LogUtils {
      * @param supplier {@linkplain Supplier}
      */
     public static void warn(final Logger logger, final String format, final Supplier<Object> supplier) {
-        if (logger.isWarnEnabled()) {
-            logger.warn(format, supplier.get());
-        }
+        logger.warn(format, supplier.get());
     }
 
     /**
@@ -163,8 +190,6 @@ public final class LogUtils {
      * @param supplier {@linkplain Supplier}
      */
     public static void warn(final Logger logger, final Supplier<Object> supplier) {
-        if (logger.isWarnEnabled()) {
-            logger.warn(Objects.toString(supplier.get()));
-        }
+        logger.warn(Objects.toString(supplier.get()));
     }
 }
