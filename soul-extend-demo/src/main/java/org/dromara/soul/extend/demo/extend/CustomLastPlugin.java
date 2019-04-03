@@ -18,7 +18,10 @@
 
 package org.dromara.soul.extend.demo.extend;
 
+import com.alibaba.fastjson.JSON;
 import org.dromara.soul.common.enums.PluginTypeEnum;
+import org.dromara.soul.common.utils.LogUtils;
+import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.plugin.SoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
 import org.slf4j.Logger;
@@ -51,8 +54,9 @@ public class CustomLastPlugin implements SoulPlugin {
      */
     @Override
     public Mono<Void> execute(final ServerWebExchange exchange, final SoulPluginChain chain) {
-        LOGGER.debug("..........custom last start..............");
-        return chain.execute(exchange);
+        Mono<Void> result = chain.execute(exchange);
+        LogUtils.debug(LOGGER, "执行责任链插件", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
+        return result;
     }
 
     /**

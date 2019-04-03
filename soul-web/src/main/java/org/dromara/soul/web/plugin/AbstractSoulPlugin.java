@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin;
 
+import com.alibaba.fastjson.JSON;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.dromara.soul.common.constant.Constants;
@@ -29,6 +30,7 @@ import org.dromara.soul.common.enums.SelectorTypeEnum;
 import org.dromara.soul.common.result.SoulResult;
 import org.dromara.soul.common.utils.JsonUtils;
 import org.dromara.soul.common.utils.LogUtils;
+import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.condition.strategy.MatchStrategyFactory;
 import org.dromara.soul.web.request.RequestDTO;
@@ -67,6 +69,7 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
      */
     @Override
     public Mono<Void> execute(final ServerWebExchange exchange, final SoulPluginChain chain) {
+        LogUtils.debug(LOGGER, "执行责任链插件", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain)));
         final PluginZkDTO pluginZkDTO = zookeeperCacheManager.findPluginByName(getNamed());
         if (!(skip(exchange) || pluginZkDTO == null || !pluginZkDTO.getEnabled())) {
             //获取selector

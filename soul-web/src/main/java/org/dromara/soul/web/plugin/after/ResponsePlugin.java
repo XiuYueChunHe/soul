@@ -26,7 +26,10 @@ import org.dromara.soul.common.result.SoulResult;
 import org.dromara.soul.common.utils.JsonUtils;
 import org.dromara.soul.web.plugin.SoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
+import org.dromara.soul.web.plugin.before.GlobalPlugin;
 import org.dromara.soul.web.request.RequestDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -43,6 +46,7 @@ import java.util.Objects;
  * @author xiaoyu
  */
 public class ResponsePlugin implements SoulPlugin {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResponsePlugin.class);
 
     /**
      * Process the Web request and (optionally) delegate to the next

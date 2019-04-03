@@ -61,6 +61,7 @@ public final class SoulWebHandler implements WebHandler {
      */
     @Override
     public Mono<Void> handle(final ServerWebExchange exchange) {
+        LogUtils.debug(LOGGER, "SoulWebHandler接收到请求,即将进入请求处理责任链", (a) -> U.lformat("exchange", JSON.toJSON(exchange), "plugins", JSON.toJSON(plugins)));
         return new DefaultSoulPluginChain(plugins)
                 .execute(exchange)
                 .doOnError(Throwable::printStackTrace);
@@ -90,8 +91,11 @@ public final class SoulWebHandler implements WebHandler {
         public Mono<Void> execute(final ServerWebExchange exchange) {
             if (this.index < plugins.size()) {
                 SoulPlugin plugin = plugins.get(this.index++);
-                return plugin.execute(exchange, this);
+                Mono<Void> result = plugin.execute(exchange, this);
+                LogUtils.debug(LOGGER, "执行责任链插件", (a) -> U.lformat("plugin", JSON.toJSON(plugin), "result", JSON.toJSON(result)));
+                return result;
             } else {
+                LogUtils.debug(LOGGER, "责任链插件全部执行完毕");
                 return Mono.empty();
             }
         }
