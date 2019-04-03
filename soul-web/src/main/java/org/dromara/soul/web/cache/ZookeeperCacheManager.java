@@ -209,51 +209,51 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
     }
 
     private void loadSelectorWatcher() {
+
         LogUtils.debug(LOGGER, "从zk加载Selector节点数据开始");
 
         Arrays.stream(PluginEnum.values()).forEach(pluginEnum -> {
 
-            LogUtils.debug(LOGGER, String.format("从zk加载Selector[%s]节点数据", JSON.toJSON(pluginEnum)));
+            LogUtils.debug(LOGGER, String.format("从zk加载Selector节点数据,所属plugin[%s]", JSON.toJSON(pluginEnum)));
 
             //获取选择器的节点
-            String selectorParentPath = ZkPathConstants.buildSelectorParentPath(pluginEnum.getName());
+            String pluginEnumName = pluginEnum.getName();
+            String selectorParentPath = ZkPathConstants.buildSelectorParentPath(pluginEnumName);
             LogUtils.debug(LOGGER, "读取zk节点path", (c) -> U.lformat("selectorParentPath", selectorParentPath));
 
             if (!zkClient.exists(selectorParentPath)) {
                 zkClient.createPersistent(selectorParentPath, true);
             }
 
+            final List<String> selectorPathList = zkClient.getChildren(selectorParentPath);
 
-            final List<String> childrenList = zkClient.getChildren(selectorParentPath);
-
-            LogUtils.debug(LOGGER, "监听zk节点Selector子节点数据", (a) -> U.lformat("childrenList", JSON.toJSON(childrenList)));
-
-            if (CollectionUtils.isNotEmpty(childrenList)) {
-                LogUtils.debug(LOGGER, "迭代Selector子节点数据,并注册子节点数据监听器");
-                childrenList.forEach(children -> {
-                    String realPath = buildRealPath(selectorParentPath, children);
-                    LogUtils.debug(LOGGER, "迭代Selector子节点数据", (a) -> U.lformat("children", JSON.toJSON(children), "子节点realPath", realPath));
-                    final SelectorZkDTO selectorZkDTO = zkClient.readData(realPath);
+            if (CollectionUtils.isNotEmpty(selectorPathList)) {
+                LogUtils.debug(LOGGER, "初始化监听所有Selector节点数据,并注册每个Selector节点数据监听器", (a) -> U.lformat("pluginEnumName", pluginEnumName, "selectorPathList", JSON.toJSON(selectorPathList)));
+                selectorPathList.forEach(selectorPath -> {
+                    String selectorRealPath = buildRealPath(selectorParentPath, selectorPath);
+                    LogUtils.debug(LOGGER, "从zk获取Selector节点数据", (a) -> U.lformat("selectorPath", JSON.toJSON(selectorPath), "selectorRealPath", selectorRealPath));
+                    final SelectorZkDTO selectorZkDTO = zkClient.readData(selectorRealPath);
                     Optional.ofNullable(selectorZkDTO)
                             .ifPresent(dto -> {
                                 final String pluginName = dto.getPluginName();
                                 //更新某个插件的SelectorZkDTO信息,每个插件都有多个SelectorZkDTO,并且设置plugin所有SelectorZkDTO的先后顺序;
-                                LogUtils.debug(LOGGER, "Selector子节点数据存在", (a) -> U.lformat("selectorZkDTO", JSON.toJSON(selectorZkDTO)));
+                                LogUtils.debug(LOGGER, "Selector节点数据存在", (a) -> U.lformat("pluginEnumName", pluginEnumName, "selectorZkDTO", JSON.toJSON(selectorZkDTO)));
                                 setSelectorMapByPluginName(pluginName, dto);
                             });
                     //监听Selector数据更新、删除操作事件
-                    subscribeSelectorDataChanges(realPath);
+                    subscribeSelectorDataChanges(selectorRealPath);
                 });
             }
 
             //监听Selector 子节点数据更新、删除操作事件
-            LogUtils.debug(LOGGER, "注册Selector父节点数据更新事件", (a) -> U.lformat("selectorParentPath", selectorParentPath));
+            LogUtils.debug(LOGGER, "注册当前plugin所属的所有Selector节点数据更新事件", (a) -> U.lformat("pluginEnumName", pluginEnumName, "selectorParentPath", selectorParentPath));
 
-            zkClient.subscribeChildChanges(selectorParentPath, (parentPath, currentChilds) -> {
-                if (CollectionUtils.isNotEmpty(currentChilds)) {
+            zkClient.subscribeChildChanges(selectorParentPath, (parentPath, selectorsPath) -> {
+                if (CollectionUtils.isNotEmpty(selectorsPath)) {
+                    LogUtils.debug(LOGGER, "监听到当前plugin所属的Selector节点数据发生更新", (a) -> U.lformat("pluginEnumName", pluginEnumName, "parentPath", parentPath, "selectorsPath", JSON.toJSON(selectorsPath)));
                     // TODO: 2019-03-30 这里 unsubscribePath 方法需要结合zk数据仔细研究一下功能
-                    final List<String> unsubscribePath = unsubscribePath(childrenList, currentChilds);
-                    unsubscribePath.stream().map(childrenPath -> buildRealPath(parentPath, childrenPath))
+                    final List<String> unsubscribePath = unsubscribePath(selectorPathList, selectorsPath);
+                    unsubscribePath.stream().map(selectorPath -> buildRealPath(parentPath, selectorPath))
                             .forEach(this::subscribeSelectorDataChanges);
                 }
             });
@@ -262,28 +262,42 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
     }
 
     private void loadRuleWatcher() {
+
+        LogUtils.debug(LOGGER, "从zk加载Rule节点数据开始");
+
         Arrays.stream(PluginEnum.values()).forEach(pluginEnum -> {
-            final String ruleParent = ZkPathConstants.buildRuleParentPath(pluginEnum.getName());
+
+            LogUtils.debug(LOGGER, String.format("从zk加载Rule节点数据,所属plugin[%s]", JSON.toJSON(pluginEnum)));
+            String pluginEnumName = pluginEnum.getName();
+            final String ruleParent = ZkPathConstants.buildRuleParentPath(pluginEnumName);
             if (!zkClient.exists(ruleParent)) {
                 zkClient.createPersistent(ruleParent, true);
             }
-            final List<String> childrenList = zkClient.getChildren(ruleParent);
-            if (CollectionUtils.isNotEmpty(childrenList)) {
-                childrenList.forEach(children -> {
-                    String realPath = buildRealPath(ruleParent, children);
-                    final RuleZkDTO ruleZkDTO = zkClient.readData(realPath);
+
+            LogUtils.debug(LOGGER, "读取zk节点path", (a) -> U.lformat("ruleParent", ruleParent));
+
+            final List<String> rulePathList = zkClient.getChildren(ruleParent);
+
+
+            if (CollectionUtils.isNotEmpty(rulePathList)) {
+                LogUtils.debug(LOGGER, "初始化监听所有Rule节点数据,并注册每个Rule节点数据监听器", (a) -> U.lformat("pluginEnumName", pluginEnumName, "rulePathList", JSON.toJSON(rulePathList)));
+                rulePathList.forEach(rulePath -> {
+                    String ruleRealPath = buildRealPath(ruleParent, rulePath);
+                    LogUtils.debug(LOGGER, "从zk获取Rule节点数据", (a) -> U.lformat("rulePath", JSON.toJSON(rulePath), "ruleRealPath", ruleRealPath));
+                    final RuleZkDTO ruleZkDTO = zkClient.readData(ruleRealPath);
                     Optional.ofNullable(ruleZkDTO)
                             .ifPresent(dto -> {
-                                String key = dto.getSelectorId();
-                                setRuleMapByKey(key, ruleZkDTO);
+                                String selectorId = dto.getSelectorId();
+                                LogUtils.debug(LOGGER, "Rule节点数据存在", (a) -> U.lformat("pluginEnumName", pluginEnumName, "ruleZkDTO", JSON.toJSON(ruleZkDTO)));
+                                setRuleMapByKey(selectorId, ruleZkDTO);
                             });
-                    subscribeRuleDataChanges(realPath);
+                    subscribeRuleDataChanges(ruleRealPath);
                 });
             }
 
             zkClient.subscribeChildChanges(ruleParent, (parentPath, currentChilds) -> {
                 if (CollectionUtils.isNotEmpty(currentChilds)) {
-                    final List<String> unsubscribePath = unsubscribePath(childrenList, currentChilds);
+                    final List<String> unsubscribePath = unsubscribePath(rulePathList, currentChilds);
                     //获取新增的节点数据，并对该节点进行订阅
                     unsubscribePath.stream().map(p -> buildRealPath(parentPath, p))
                             .forEach(this::subscribeRuleDataChanges);
@@ -292,6 +306,11 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
         });
     }
 
+    /**
+     * 功能说明：暂不处理该业务
+     * Author：spring
+     * Date：2019-04-03 16:12
+     */
     private void loadAppAuthWatcher() {
         final String appAuthParent = ZkPathConstants.APP_AUTH_PARENT;
         if (!zkClient.exists(appAuthParent)) {
@@ -368,21 +387,21 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
     }
 
     private void subscribeSelectorDataChanges(final String path) {
-        LogUtils.debug(LOGGER, "注册Selector数据更新监听事件", (a) -> U.lformat("zk path", path));
+        LogUtils.debug(LOGGER, "注册Selector节点数据更新监听事件", (a) -> U.lformat("Selector zk path", path));
         zkClient.subscribeDataChanges(path, new IZkDataListener() {
             @Override
             public void handleDataChange(final String dataPath, final Object data) {
                 //处理SelectorZkDTO更新业务
                 Optional.ofNullable(data)
                         .ifPresent(d -> {
-                            SelectorZkDTO dto = (SelectorZkDTO) d;
-                            LogUtils.debug(LOGGER, "Selector数据更新事件", (a) -> U.lformat("dataPath", dataPath, "SelectorZkDTO", JSON.toJSON(dto)));
+                            SelectorZkDTO selectorZkDTO = (SelectorZkDTO) d;
+                            LogUtils.debug(LOGGER, "Selector节点数据更新事件", (a) -> U.lformat("dataPath", dataPath, "SelectorZkDTO", JSON.toJSON(selectorZkDTO)));
                             //向UpstreamCacheManager注册SelectorZkDTO,用于负载均衡
-                            if (dto.getPluginName().equals(PluginEnum.DIVIDE.getName())) {
-                                LogUtils.debug(LOGGER, "向UpstreamCacheManager注册SelectorZkDTO", (a) -> U.lformat("pluginName", dto.getPluginName(), "selectorZkDTO", JSON.toJSON(dto)));
-                                UpstreamCacheManager.submit(dto);
+                            if (selectorZkDTO.getPluginName().equals(PluginEnum.DIVIDE.getName())) {
+                                LogUtils.debug(LOGGER, "向UpstreamCacheManager注册SelectorZkDTO", (a) -> U.lformat("pluginName", selectorZkDTO.getPluginName(), "selectorZkDTO", JSON.toJSON(selectorZkDTO)));
+                                UpstreamCacheManager.submit(selectorZkDTO);
                             }
-                            final String key = dto.getPluginName();
+                            final String key = selectorZkDTO.getPluginName();
                             final List<SelectorZkDTO> selectorZkDTOList = SELECTOR_MAP.get(key);
 
                             //根据pluginName更新SelectorZkDTO列表
@@ -390,15 +409,16 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                                 LogUtils.debug(LOGGER, "SELECTOR_MAP更新前selectorZkDTOList", (a) -> U.lformat("selectorZkDTOList", JSON.toJSON(selectorZkDTOList)));
 
                                 final List<SelectorZkDTO> resultList =
-                                        selectorZkDTOList.stream().filter(r -> !r.getId().equals(dto.getId())).collect(Collectors.toList());
-                                resultList.add(dto);
+                                        selectorZkDTOList.stream().filter(r -> !r.getId().equals(selectorZkDTO.getId())).collect(Collectors.toList());
+                                resultList.add(selectorZkDTO);
                                 final List<SelectorZkDTO> collect = resultList.stream()
                                         .sorted(Comparator.comparing(SelectorZkDTO::getSort))
                                         .collect(Collectors.toList());
                                 LogUtils.debug(LOGGER, "SELECTOR_MAP更新后selectorZkDTOList", (a) -> U.lformat("selectorZkDTOList", JSON.toJSON(collect)));
                                 SELECTOR_MAP.put(key, collect);
                             } else {
-                                SELECTOR_MAP.put(key, Lists.newArrayList(dto));
+                                LogUtils.debug(LOGGER, "SELECTOR_MAP中不存在当前plugin对应的selectorZkDTOList,直接添加");
+                                SELECTOR_MAP.put(key, Lists.newArrayList(selectorZkDTO));
                             }
                         });
             }
@@ -412,11 +432,11 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                 final String key = str.substring(1, str.length() - id.length() - 1);
                 Optional.of(key).ifPresent(k -> {
                     final List<SelectorZkDTO> selectorZkDTOList = SELECTOR_MAP.get(k);
-                    LogUtils.debug(LOGGER, "Selector数据删除事件", (a) -> U.lformat("dataPath", dataPath));
+                    LogUtils.debug(LOGGER, "Selector节点数据删除事件", (a) -> U.lformat("dataPath", dataPath));
                     //从当前plugin对应的selectorZkDTOList中移除该selectorZkDTO
                     LogUtils.debug(LOGGER, "SELECTOR_MAP删除前selectorZkDTOList", (a) -> U.lformat("selectorZkDTOList", JSON.toJSON(selectorZkDTOList)));
                     selectorZkDTOList.removeIf(e -> e.getId().equals(id));
-                    LogUtils.debug(LOGGER, "SELECTOR_MAP更新后selectorZkDTOList", (a) -> U.lformat("selectorZkDTOList", JSON.toJSON(selectorZkDTOList)));
+                    LogUtils.debug(LOGGER, "SELECTOR_MAP删除后selectorZkDTOList", (a) -> U.lformat("selectorZkDTOList", JSON.toJSON(selectorZkDTOList)));
                 });
             }
         });
@@ -434,11 +454,13 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
         return latestChild;
     }
 
-    private void setRuleMapByKey(final String key, final RuleZkDTO ruleZkDTO) {
-        Optional.ofNullable(key)
+    private void setRuleMapByKey(final String selectorId, final RuleZkDTO ruleZkDTO) {
+        Optional.ofNullable(selectorId)
                 .ifPresent(k -> {
+                    LogUtils.debug(LOGGER, "向RULE_MAP添加RuleZkDTO数据", (a) -> U.lformat("selectorId", selectorId, "ruleZkDTO", JSON.toJSON(ruleZkDTO)));
                     if (RULE_MAP.containsKey(k)) {
-                        final List<RuleZkDTO> ruleZkDTOList = RULE_MAP.get(key);
+                        final List<RuleZkDTO> ruleZkDTOList = RULE_MAP.get(selectorId);
+                        LogUtils.debug(LOGGER, "RULE_MAP更新前ruleZkDTOList", (a) -> U.lformat("ruleZkDTOList", JSON.toJSON(ruleZkDTOList)));
                         final List<RuleZkDTO> resultList = ruleZkDTOList.stream()
                                 .filter(r -> !r.getId()
                                         .equals(ruleZkDTO.getId()))
@@ -447,49 +469,58 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                         final List<RuleZkDTO> collect = resultList.stream()
                                 .sorted(Comparator.comparing(RuleZkDTO::getSort))
                                 .collect(Collectors.toList());
-                        RULE_MAP.put(key, collect);
-
+                        RULE_MAP.put(selectorId, collect);
+                        LogUtils.debug(LOGGER, "RULE_MAP更新后ruleZkDTOList", (a) -> U.lformat("ruleZkDTOList", JSON.toJSON(collect)));
                     } else {
-                        RULE_MAP.put(key, Lists.newArrayList(ruleZkDTO));
+                        LogUtils.debug(LOGGER, "RULE_MAP中不存在当前selectorId对应的ruleZkDTOList,直接添加");
+                        RULE_MAP.put(selectorId, Lists.newArrayList(ruleZkDTO));
                     }
                 });
     }
 
-    private void subscribeRuleDataChanges(final String path) {
-        zkClient.subscribeDataChanges(path, new IZkDataListener() {
+    private void subscribeRuleDataChanges(final String ruleRealPath) {
+        zkClient.subscribeDataChanges(ruleRealPath, new IZkDataListener() {
             @Override
             public void handleDataChange(final String dataPath, final Object data) {
                 Optional.ofNullable(data)
                         .ifPresent(d -> {
-                            RuleZkDTO dto = (RuleZkDTO) d;
-                            final String key = dto.getSelectorId();
-                            final List<RuleZkDTO> ruleZkDTOList = RULE_MAP.get(key);
+                            RuleZkDTO ruleZkDTO = (RuleZkDTO) d;
+                            LogUtils.debug(LOGGER, "Rule节点数据更新事件", (a) -> U.lformat("dataPath", dataPath, "ruleZkDTO", JSON.toJSON(ruleZkDTO)));
+                            final String selectorId = ruleZkDTO.getSelectorId();
+                            final List<RuleZkDTO> ruleZkDTOList = RULE_MAP.get(selectorId);
                             if (CollectionUtils.isNotEmpty(ruleZkDTOList)) {
+                                LogUtils.debug(LOGGER, "RULE_MAP更新前ruleZkDTOList", (a) -> U.lformat("ruleZkDTOList", JSON.toJSON(ruleZkDTOList)));
                                 final List<RuleZkDTO> resultList = ruleZkDTOList.stream()
                                         .filter(r -> !r.getId()
-                                                .equals(dto.getId())).collect(Collectors.toList());
-                                resultList.add(dto);
+                                                .equals(ruleZkDTO.getId())).collect(Collectors.toList());
+                                resultList.add(ruleZkDTO);
                                 final List<RuleZkDTO> collect = resultList.stream()
                                         .sorted(Comparator.comparing(RuleZkDTO::getSort))
                                         .collect(Collectors.toList());
-                                RULE_MAP.put(key, collect);
+                                RULE_MAP.put(selectorId, collect);
+                                LogUtils.debug(LOGGER, "RULE_MAP更新后ruleZkDTOList", (a) -> U.lformat("ruleZkDTOList", JSON.toJSON(collect)));
                             } else {
-                                RULE_MAP.put(key, Lists.newArrayList(dto));
+                                LogUtils.debug(LOGGER, "RULE_MAP中不存在当前selectorId对应的ruleZkDTOList,直接添加");
+                                RULE_MAP.put(selectorId, Lists.newArrayList(ruleZkDTO));
                             }
                         });
             }
 
             @Override
             public void handleDataDeleted(final String dataPath) {
-                //规定路径 key-id key为selectorId, id为规则id
+                LogUtils.debug(LOGGER, "Rule节点数据删除事件", (a) -> U.lformat("dataPath", dataPath));
+                //规定路径 selectorId-ruleId key为selectorId, id为规则id
                 final List<String> list = Splitter.on(ZkPathConstants.SELECTOR_JOIN_RULE)
                         .splitToList(dataPath.substring(dataPath.lastIndexOf("/") + 1));
-                final String key = list.get(0);
-                final String id = list.get(1);
-                UpstreamCacheManager.removeByKey(id);
-                Optional.ofNullable(key).ifPresent(k -> {
-                    final List<RuleZkDTO> ruleZkDTOList = RULE_MAP.get(k);
-                    ruleZkDTOList.removeIf(e -> e.getId().equals(id));
+                final String selectorId = list.get(0);
+                final String ruleId = list.get(1);
+                LogUtils.debug(LOGGER, "移除UpstreamCacheManager中缓存的Rule", (a) -> U.lformat("selectorId", selectorId, "ruleId", ruleId));
+                UpstreamCacheManager.removeByKey(ruleId);
+                Optional.ofNullable(selectorId).ifPresent(selectorIdd -> {
+                    final List<RuleZkDTO> ruleZkDTOList = RULE_MAP.get(selectorIdd);
+                    LogUtils.debug(LOGGER, "RULE_MAP删除前ruleZkDTOList", (a) -> U.lformat("ruleZkDTOList", JSON.toJSON(ruleZkDTOList)));
+                    ruleZkDTOList.removeIf(e -> e.getId().equals(ruleId));
+                    LogUtils.debug(LOGGER, "RULE_MAP删除后ruleZkDTOList", (a) -> U.lformat("ruleZkDTOList", JSON.toJSON(ruleZkDTOList)));
                 });
             }
         });
