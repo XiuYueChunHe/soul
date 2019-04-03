@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.cache;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -30,6 +31,10 @@ import org.dromara.soul.common.dto.zk.PluginZkDTO;
 import org.dromara.soul.common.dto.zk.RuleZkDTO;
 import org.dromara.soul.common.dto.zk.SelectorZkDTO;
 import org.dromara.soul.common.enums.PluginEnum;
+import org.dromara.soul.common.utils.LogUtils;
+import org.dromara.soul.common.utils.U;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +52,9 @@ import java.util.stream.Collectors;
 @Component
 @SuppressWarnings("all")
 public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperCacheManager.class);
+
     private static final Map<String, PluginZkDTO> PLUGIN_MAP = Maps.newConcurrentMap();
     private static final Map<String, List<SelectorZkDTO>> SELECTOR_MAP = Maps.newConcurrentMap();
     private static final Map<String, List<RuleZkDTO>> RULE_MAP = Maps.newConcurrentMap();
@@ -88,7 +96,9 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
      * @return AppAuthZkDTO {@linkplain AppAuthZkDTO}
      */
     public AppAuthZkDTO findAuthDTOByAppKey(final String appKey) {
-        return AUTH_MAP.get(appKey);
+        AppAuthZkDTO appAuthZkDTO = AUTH_MAP.get(appKey);
+        LogUtils.debug(LOGGER, "根据appKey查询AuthDTO", (c) -> U.lformat("appKey", appKey, "appAuthZkDTO", JSON.toJSON(appAuthZkDTO)));
+        return appAuthZkDTO;
     }
 
     /**
@@ -98,7 +108,9 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
      * @return PluginZkDTO {@linkplain  PluginZkDTO}
      */
     public PluginZkDTO findPluginByName(final String pluginName) {
-        return PLUGIN_MAP.get(pluginName);
+        PluginZkDTO pluginZkDTO = PLUGIN_MAP.get(pluginName);
+        LogUtils.debug(LOGGER, "根据pluginName查询Plugin", (c) -> U.lformat("pluginName", pluginName, "pluginZkDTO", JSON.toJSON(pluginZkDTO)));
+        return pluginZkDTO;
     }
 
     /**
@@ -108,7 +120,9 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
      * @return SelectorZkDTO list {@linkplain  SelectorZkDTO}
      */
     public List<SelectorZkDTO> findSelectorByPluginName(final String pluginName) {
-        return SELECTOR_MAP.get(pluginName);
+        List<SelectorZkDTO> selectorZkDTOS = SELECTOR_MAP.get(pluginName);
+        LogUtils.debug(LOGGER, "根据pluginName查询Selector", (c) -> U.lformat("pluginName", pluginName, "selectorZkDTOS", JSON.toJSON(selectorZkDTOS)));
+        return selectorZkDTOS;
     }
 
     /**
@@ -118,7 +132,9 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
      * @return RuleZkDTO list {@linkplain  RuleZkDTO}
      */
     public List<RuleZkDTO> findRuleBySelectorId(final String selectorId) {
-        return RULE_MAP.get(selectorId);
+        List<RuleZkDTO> ruleZkDTOS = RULE_MAP.get(selectorId);
+        LogUtils.debug(LOGGER, "根据selectorId查询Rule", (c) -> U.lformat("selectorId", selectorId, "ruleZkDTOS", JSON.toJSON(ruleZkDTOS)));
+        return ruleZkDTOS;
     }
 
     @Override
@@ -143,7 +159,10 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
      * Date：2019-03-30 10:01
      */
     private void loadPluginWatcher() {
+        LogUtils.debug(LOGGER, "从zk加载Plugin节点数据开始");
         Arrays.stream(PluginEnum.values()).forEach(pluginEnum -> {
+
+            LogUtils.debug(LOGGER, String.format("从zk加载Plugin[%s]节点数据", JSON.toJSON(pluginEnum)));
 
             //初始化zk数据保存节点
             String pluginPath = ZkPathConstants.buildPluginPath(pluginEnum.getName());
@@ -151,11 +170,16 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                 zkClient.createPersistent(pluginPath, true);
             }
 
+            LogUtils.debug(LOGGER, "读取zk节点path", (c) -> U.lformat("pluginPath", pluginPath));
 
             //将插件数据缓存到PLUGIN_MAP
-            PluginZkDTO data = zkClient.readData(pluginPath);
-            Optional.ofNullable(data).ifPresent(d -> PLUGIN_MAP.put(pluginEnum.getName(), data));
+            PluginZkDTO pluginZkDTO = zkClient.readData(pluginPath);
+            Optional.ofNullable(pluginZkDTO).ifPresent(d -> {
+                LogUtils.debug(LOGGER, "读取zk节点plugin数据存在,保存到PLUGIN_MAP", (c) -> U.lformat("pluginZkDTO", JSON.toJSON(pluginZkDTO)));
+                PLUGIN_MAP.put(pluginEnum.getName(), pluginZkDTO);
+            });
 
+            LogUtils.debug(LOGGER, "监听zk节点plugin数据更新操作");
 
             //订阅zk相应节点数据更新事件
             zkClient.subscribeDataChanges(pluginPath, new IZkDataListener() {
@@ -164,17 +188,20 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                 @Override
                 public void handleDataChange(final String dataPath, final Object data) {
                     //如果数据更新,则更新plugin缓存MAP
+                    LogUtils.debug(LOGGER, "zk节点plugin数据更新", (c) -> U.lformat("dataPath", dataPath, "pluginZkDTO", JSON.toJSON(data)));
                     Optional.ofNullable(data)
                             .ifPresent(o -> {
                                 PluginZkDTO dto = (PluginZkDTO) o;
                                 PLUGIN_MAP.put(dto.getName(), dto);
+                                LogUtils.debug(LOGGER, "zk节点plugin更新数据保存到PLUGIN_MAP", (c) -> U.lformat("pluginZkDTO", JSON.toJSON(dto)));
                             });
                 }
 
                 //如果数据节点被删除,则删除相应plugin缓存
                 @Override
                 public void handleDataDeleted(final String dataPath) {
-                    PLUGIN_MAP.remove(pluginEnum.getName());
+                    PluginZkDTO remove = PLUGIN_MAP.remove(pluginEnum.getName());
+                    LogUtils.debug(LOGGER, "zk节点plugin数据删除,同步删除PLUGIN_MAP中缓存数据", (c) -> U.lformat("dataPath", dataPath, "pluginZkDTO", JSON.toJSON(remove)));
                 }
             });
 
@@ -182,24 +209,36 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
     }
 
     private void loadSelectorWatcher() {
+        LogUtils.debug(LOGGER, "从zk加载Selector节点数据开始");
+
         Arrays.stream(PluginEnum.values()).forEach(pluginEnum -> {
+
+            LogUtils.debug(LOGGER, String.format("从zk加载Selector[%s]节点数据", JSON.toJSON(pluginEnum)));
+
             //获取选择器的节点
-            String selectorParentPath =
-                    ZkPathConstants.buildSelectorParentPath(pluginEnum.getName());
+            String selectorParentPath = ZkPathConstants.buildSelectorParentPath(pluginEnum.getName());
+            LogUtils.debug(LOGGER, "读取zk节点path", (c) -> U.lformat("selectorParentPath", selectorParentPath));
 
             if (!zkClient.exists(selectorParentPath)) {
                 zkClient.createPersistent(selectorParentPath, true);
             }
+
+
             final List<String> childrenList = zkClient.getChildren(selectorParentPath);
 
+            LogUtils.debug(LOGGER, "监听zk节点Selector子节点数据", (a) -> U.lformat("childrenList", JSON.toJSON(childrenList)));
+
             if (CollectionUtils.isNotEmpty(childrenList)) {
+                LogUtils.debug(LOGGER, "迭代Selector子节点数据,并注册子节点数据监听器");
                 childrenList.forEach(children -> {
                     String realPath = buildRealPath(selectorParentPath, children);
+                    LogUtils.debug(LOGGER, "迭代Selector子节点数据", (a) -> U.lformat("children", JSON.toJSON(children), "子节点realPath", realPath));
                     final SelectorZkDTO selectorZkDTO = zkClient.readData(realPath);
                     Optional.ofNullable(selectorZkDTO)
                             .ifPresent(dto -> {
                                 final String pluginName = dto.getPluginName();
                                 //更新某个插件的SelectorZkDTO信息,每个插件都有多个SelectorZkDTO,并且设置plugin所有SelectorZkDTO的先后顺序;
+                                LogUtils.debug(LOGGER, "Selector子节点数据存在", (a) -> U.lformat("selectorZkDTO", JSON.toJSON(selectorZkDTO)));
                                 setSelectorMapByPluginName(pluginName, dto);
                             });
                     //监听Selector数据更新、删除操作事件
@@ -208,6 +247,8 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
             }
 
             //监听Selector 子节点数据更新、删除操作事件
+            LogUtils.debug(LOGGER, "注册Selector父节点数据更新事件", (a) -> U.lformat("selectorParentPath", selectorParentPath));
+
             zkClient.subscribeChildChanges(selectorParentPath, (parentPath, currentChilds) -> {
                 if (CollectionUtils.isNotEmpty(currentChilds)) {
                     // TODO: 2019-03-30 这里 unsubscribePath 方法需要结合zk数据仔细研究一下功能
@@ -292,17 +333,19 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
      */
     private void setSelectorMapByPluginName(final String pluginName, final SelectorZkDTO selectorZkDTO) {
         Optional.ofNullable(pluginName)
-                .ifPresent(k -> {
+                .ifPresent(pluginName2 -> {
 
                     //向UpstreamCacheManager注册SelectorZkDTO
                     if (selectorZkDTO.getPluginName().equals(PluginEnum.DIVIDE.getName())) {
+                        LogUtils.debug(LOGGER, "向UpstreamCacheManager注册SelectorZkDTO", (a) -> U.lformat("pluginName", pluginName, "selectorZkDTO", JSON.toJSON(selectorZkDTO)));
                         UpstreamCacheManager.submit(selectorZkDTO);
                     }
 
                     //向SELECTOR_MAP添加SelectorZkDTO数据
-                    if (SELECTOR_MAP.containsKey(k)) {
+                    LogUtils.debug(LOGGER, "向SELECTOR_MAP添加SelectorZkDTO数据");
+                    if (SELECTOR_MAP.containsKey(pluginName2)) {
                         final List<SelectorZkDTO> selectorZkDTOList = SELECTOR_MAP.get(pluginName);
-
+                        LogUtils.debug(LOGGER, "SELECTOR_MAP更新前selectorZkDTOList", (a) -> U.lformat("selectorZkDTOList", JSON.toJSON(selectorZkDTOList)));
                         //由于这里是List,所以更新的时候采用了先过滤掉当前SelectorZkDTO
                         final List<SelectorZkDTO> resultList = selectorZkDTOList.stream()
                                 .filter(r -> !r.getId()
@@ -314,15 +357,18 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                         final List<SelectorZkDTO> collect = resultList.stream()
                                 .sorted(Comparator.comparing(SelectorZkDTO::getSort))
                                 .collect(Collectors.toList());
+                        LogUtils.debug(LOGGER, "SELECTOR_MAP更新后selectorZkDTOList", (a) -> U.lformat("selectorZkDTOList", JSON.toJSON(collect)));
                         SELECTOR_MAP.put(pluginName, collect);
                     } else {
                         //直接向SELECTOR_MAP添加SelectorZkDTO数据
+                        LogUtils.debug(LOGGER, "SELECTOR_MAP中不存在当前plugin对应的selectorZkDTOList,直接添加");
                         SELECTOR_MAP.put(pluginName, Lists.newArrayList(selectorZkDTO));
                     }
                 });
     }
 
     private void subscribeSelectorDataChanges(final String path) {
+        LogUtils.debug(LOGGER, "注册Selector数据更新监听事件", (a) -> U.lformat("zk path", path));
         zkClient.subscribeDataChanges(path, new IZkDataListener() {
             @Override
             public void handleDataChange(final String dataPath, final Object data) {
@@ -330,8 +376,10 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                 Optional.ofNullable(data)
                         .ifPresent(d -> {
                             SelectorZkDTO dto = (SelectorZkDTO) d;
+                            LogUtils.debug(LOGGER, "Selector数据更新事件", (a) -> U.lformat("dataPath", dataPath, "SelectorZkDTO", JSON.toJSON(dto)));
                             //向UpstreamCacheManager注册SelectorZkDTO,用于负载均衡
                             if (dto.getPluginName().equals(PluginEnum.DIVIDE.getName())) {
+                                LogUtils.debug(LOGGER, "向UpstreamCacheManager注册SelectorZkDTO", (a) -> U.lformat("pluginName", dto.getPluginName(), "selectorZkDTO", JSON.toJSON(dto)));
                                 UpstreamCacheManager.submit(dto);
                             }
                             final String key = dto.getPluginName();
@@ -339,12 +387,15 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
 
                             //根据pluginName更新SelectorZkDTO列表
                             if (CollectionUtils.isNotEmpty(selectorZkDTOList)) {
+                                LogUtils.debug(LOGGER, "SELECTOR_MAP更新前selectorZkDTOList", (a) -> U.lformat("selectorZkDTOList", JSON.toJSON(selectorZkDTOList)));
+
                                 final List<SelectorZkDTO> resultList =
                                         selectorZkDTOList.stream().filter(r -> !r.getId().equals(dto.getId())).collect(Collectors.toList());
                                 resultList.add(dto);
                                 final List<SelectorZkDTO> collect = resultList.stream()
                                         .sorted(Comparator.comparing(SelectorZkDTO::getSort))
                                         .collect(Collectors.toList());
+                                LogUtils.debug(LOGGER, "SELECTOR_MAP更新后selectorZkDTOList", (a) -> U.lformat("selectorZkDTOList", JSON.toJSON(collect)));
                                 SELECTOR_MAP.put(key, collect);
                             } else {
                                 SELECTOR_MAP.put(key, Lists.newArrayList(dto));
@@ -361,8 +412,11 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                 final String key = str.substring(1, str.length() - id.length() - 1);
                 Optional.of(key).ifPresent(k -> {
                     final List<SelectorZkDTO> selectorZkDTOList = SELECTOR_MAP.get(k);
+                    LogUtils.debug(LOGGER, "Selector数据删除事件", (a) -> U.lformat("dataPath", dataPath));
                     //从当前plugin对应的selectorZkDTOList中移除该selectorZkDTO
+                    LogUtils.debug(LOGGER, "SELECTOR_MAP删除前selectorZkDTOList", (a) -> U.lformat("selectorZkDTOList", JSON.toJSON(selectorZkDTOList)));
                     selectorZkDTOList.removeIf(e -> e.getId().equals(id));
+                    LogUtils.debug(LOGGER, "SELECTOR_MAP更新后selectorZkDTOList", (a) -> U.lformat("selectorZkDTOList", JSON.toJSON(selectorZkDTOList)));
                 });
             }
         });
