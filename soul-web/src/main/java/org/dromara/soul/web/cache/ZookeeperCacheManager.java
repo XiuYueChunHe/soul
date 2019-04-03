@@ -514,7 +514,7 @@ public class ZookeeperCacheManager implements CommandLineRunner, DisposableBean 
                         .splitToList(dataPath.substring(dataPath.lastIndexOf("/") + 1));
                 final String selectorId = list.get(0);
                 final String ruleId = list.get(1);
-                LogUtils.debug(LOGGER, "移除UpstreamCacheManager中缓存的Rule", (a) -> U.lformat("selectorId", selectorId, "ruleId", ruleId));
+                LogUtils.debug(LOGGER, "根据ruleId移除UpstreamCacheManager中缓存的DivideUpstream", (a) -> U.lformat("selectorId", selectorId, "ruleId", ruleId));
                 UpstreamCacheManager.removeByKey(ruleId);
                 Optional.ofNullable(selectorId).ifPresent(selectorIdd -> {
                     final List<RuleZkDTO> ruleZkDTOList = RULE_MAP.get(selectorIdd);
