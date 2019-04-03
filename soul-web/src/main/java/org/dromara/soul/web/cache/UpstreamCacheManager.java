@@ -24,6 +24,7 @@ import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.dromara.soul.common.dto.convert.DivideUpstream;
 import org.dromara.soul.common.dto.zk.SelectorZkDTO;
+import org.dromara.soul.common.exception.ExceptionUtil;
 import org.dromara.soul.common.utils.GsonUtil;
 import org.dromara.soul.common.utils.LogUtils;
 import org.dromara.soul.common.utils.U;
@@ -217,12 +218,15 @@ public class UpstreamCacheManager {
 
         private void registerTask() {
             while (true) {
+
                 try {
                     final SelectorZkDTO selectorZkDTO = BLOCKING_QUEUE.take();
                     Optional.of(selectorZkDTO).ifPresent(UpstreamCacheManager.this::execute);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    LogUtils.debug(LOGGER, "Worker线程执行register SelectorZkDTO任务失败,错误信息如下:");
+                    LogUtils.debug(LOGGER, ExceptionUtil.printStackTraceToString(e));
                 }
+
             }
         }
     }
