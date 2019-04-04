@@ -76,19 +76,26 @@ public class WafPlugin extends AbstractSoulPlugin {
         final WafHandle wafHandle = GsonUtil.fromJson(handle, WafHandle.class);
 
         if (Objects.isNull(wafHandle) || StringUtils.isBlank(wafHandle.getPermission())) {
-            LogUtils.error(LOGGER, "waf handler can not config：{}", () -> handle);
-            return chain.execute(exchange);
+            LogUtils.info(LOGGER, "waf handler can not config：{}", handle);
+            Mono<Void> result = chain.execute(exchange);
+            LogUtils.debug(LOGGER, "执行WafPlugin -> WafHandle参数不合法", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
+            return result;
         }
         // if reject
         if (WafEnum.REJECT.getName().equals(wafHandle.getPermission())) {
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
-            final SoulResult error = SoulResult.error(Integer.valueOf(wafHandle.getStatusCode()),
-                    Constants.REJECT_MSG);
-            return exchange.getResponse()
-                    .writeWith(Mono.just(exchange.getResponse().bufferFactory()
-                            .wrap(Objects.requireNonNull(JsonUtils.toJson(error)).getBytes())));
+            final SoulResult error = SoulResult.error(Integer.valueOf(wafHandle.getStatusCode()), Constants.REJECT_MSG);
+            Mono<Void> result = exchange.getResponse().writeWith(
+                    Mono.just(
+                            exchange.getResponse().bufferFactory().wrap(Objects.requireNonNull(JsonUtils.toJson(error)).getBytes())
+                    )
+            );
+            LogUtils.debug(LOGGER, "执行WafPlugin -> 拒绝", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
+            return result;
         }
-        return chain.execute(exchange);
+        Mono<Void> result = chain.execute(exchange);
+        LogUtils.debug(LOGGER, "执行WafPlugin -> 放行", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
+        return result;
     }
 
     /**

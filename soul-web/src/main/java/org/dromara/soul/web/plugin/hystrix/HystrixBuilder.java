@@ -57,15 +57,14 @@ public class HystrixBuilder {
 
         HystrixCommandKey commandKey = HystrixCommandKey.Factory.asKey(hystrixHandle.getCommandKey());
 
-        final HystrixCommandProperties.Setter propertiesSetter =
-                HystrixCommandProperties.Setter()
-                        .withExecutionTimeoutInMilliseconds(hystrixHandle.getTimeout())
-                        .withCircuitBreakerEnabled(true)
-                        .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
-                        .withExecutionIsolationSemaphoreMaxConcurrentRequests(hystrixHandle.getMaxConcurrentRequests())
-                        .withCircuitBreakerErrorThresholdPercentage(hystrixHandle.getErrorThresholdPercentage())
-                        .withCircuitBreakerRequestVolumeThreshold(hystrixHandle.getRequestVolumeThreshold())
-                        .withCircuitBreakerSleepWindowInMilliseconds(hystrixHandle.getSleepWindowInMilliseconds());
+        final HystrixCommandProperties.Setter propertiesSetter = HystrixCommandProperties.Setter()
+                .withExecutionTimeoutInMilliseconds(hystrixHandle.getTimeout())
+                .withCircuitBreakerEnabled(true)
+                .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
+                .withExecutionIsolationSemaphoreMaxConcurrentRequests(hystrixHandle.getMaxConcurrentRequests())
+                .withCircuitBreakerErrorThresholdPercentage(hystrixHandle.getErrorThresholdPercentage())
+                .withCircuitBreakerRequestVolumeThreshold(hystrixHandle.getRequestVolumeThreshold())
+                .withCircuitBreakerSleepWindowInMilliseconds(hystrixHandle.getSleepWindowInMilliseconds());
 
         return HystrixObservableCommand.Setter
                 .withGroupKey(groupKey)

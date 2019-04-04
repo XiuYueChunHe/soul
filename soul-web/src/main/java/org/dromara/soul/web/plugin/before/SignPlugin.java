@@ -73,14 +73,25 @@ public class SignPlugin extends AbstractSoulPlugin {
     @Override
     protected Mono<Void> doExecute(final ServerWebExchange exchange, final SoulPluginChain chain, final SelectorZkDTO selector, final RuleZkDTO rule) {
         final RequestDTO requestDTO = exchange.getAttribute(Constants.REQUESTDTO);
-        final Boolean success = signVerify(Objects.requireNonNull(requestDTO));
-        if (!success) {
+        final Boolean signIsPassed = signVerify(Objects.requireNonNull(requestDTO));
+        if (!signIsPassed) {
+
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+
             final SoulResult error = SoulResult.error(HttpStatus.UNAUTHORIZED.value(), Constants.SIGN_IS_NOT_PASS);
-            return exchange.getResponse().writeWith(Mono.just(exchange.getResponse()
-                    .bufferFactory().wrap(Objects.requireNonNull(JsonUtils.toJson(error)).getBytes())));
+
+            Mono<Void> result = exchange.getResponse().writeWith(
+                    Mono.just(
+                            exchange.getResponse().bufferFactory().wrap(Objects.requireNonNull(JsonUtils.toJson(error)).getBytes())
+                    )
+            );
+            LogUtils.debug(LOGGER, "执行SignPlugin", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result), "signIsPassed", signIsPassed));
+
+            return result;
         }
-        return chain.execute(exchange);
+        Mono<Void> result = chain.execute(exchange);
+        LogUtils.debug(LOGGER, "执行SignPlugin", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result), "signIsPassed", signIsPassed));
+        return result;
     }
 
     /**

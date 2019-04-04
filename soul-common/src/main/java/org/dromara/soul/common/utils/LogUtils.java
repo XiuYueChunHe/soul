@@ -77,6 +77,15 @@ public final class LogUtils {
     }
 
     /**
+     * 功能说明：添加String日志
+     * Author：spring
+     * Date：2019-04-02 16:28
+     */
+    public static void debug(final Logger logger, final String message, final String content) {
+        logger.debug(String.join(",", message, content));
+    }
+
+    /**
      * 功能说明：普通 debug 日志
      * Author：spring
      * Date：2019-04-02 17:14

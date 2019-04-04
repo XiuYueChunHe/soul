@@ -71,8 +71,14 @@ public class MonitorPlugin extends AbstractSoulPlugin {
 
     @Override
     protected Mono<Void> doExecute(final ServerWebExchange exchange, final SoulPluginChain chain, final SelectorZkDTO selector, final RuleZkDTO rule) {
-        soulEventPublisher.publishEvent(buildMonitorData(exchange));
-        return chain.execute(exchange);
+        MonitorDO monitorDO = buildMonitorData(exchange);
+        soulEventPublisher.publishEvent(monitorDO);
+        Mono<Void> result = chain.execute(exchange);
+        LogUtils.info(LOGGER, "执行MonitorPlugin", (a) -> U.lformat(
+                "monitorDO", JSON.toJSON(monitorDO),
+                "result", JSON.toJSON(result)
+        ));
+        return result;
     }
 
     private MonitorDO buildMonitorData(final ServerWebExchange exchange) {
