@@ -44,7 +44,7 @@ abstract class AbstractMatchStrategy {
      */
     String buildRealData(final ConditionZkDTO condition, final ServerWebExchange exchange) {
         String realData = "";
-        if (condition.getParamType().equals(ParamTypeEnum.QUERY.getName())) {
+        if (Objects.equals(ParamTypeEnum.QUERY.getName(), condition.getParamType())) {
             final MultiValueMap<String, String> queryParams = exchange.getRequest().getQueryParams();
             realData = queryParams.getFirst(condition.getParamName());
         } else if (Objects.equals(ParamTypeEnum.HOST.getName(), condition.getParamType())) {

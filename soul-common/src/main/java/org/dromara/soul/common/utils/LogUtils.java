@@ -103,6 +103,7 @@ public final class LogUtils {
         logger.debug(remark + "," + msg.lazyformat());
     }
 
+
     /**
      * 功能说明：普通 info 日志
      * Author：spring
@@ -179,6 +180,15 @@ public final class LogUtils {
      */
     public static void error(final Logger logger, final Supplier<Object> supplier) {
         logger.error(Objects.toString(supplier.get()));
+    }
+
+    /**
+     * 功能说明：普通 error 日志
+     * Author：spring
+     * Date：2019-04-02 17:14
+     */
+    public static void error(final Logger logger, String remark, org.dromara.soul.common.utils.Supplier<String> msg) {
+        logger.error(remark + "," + msg.lazyformat());
     }
 
     /**

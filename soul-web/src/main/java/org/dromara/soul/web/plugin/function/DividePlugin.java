@@ -30,6 +30,7 @@ import org.dromara.soul.common.enums.PluginEnum;
 import org.dromara.soul.common.enums.PluginTypeEnum;
 import org.dromara.soul.common.enums.ResultEnum;
 import org.dromara.soul.common.enums.RpcTypeEnum;
+import org.dromara.soul.common.exception.ExceptionUtil;
 import org.dromara.soul.common.utils.GsonUtil;
 import org.dromara.soul.common.utils.LogUtils;
 import org.dromara.soul.common.utils.U;
@@ -82,53 +83,55 @@ public class DividePlugin extends AbstractSoulPlugin {
 
     @Override
     protected Mono<Void> doExecute(final ServerWebExchange exchange, final SoulPluginChain chain, final SelectorZkDTO selector, final RuleZkDTO rule) {
+
+        LogUtils.debug(LOGGER, "执行DividePlugin", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "selector", JSON.toJSON(selector), "rule", JSON.toJSON(rule)));
+
         final RequestDTO requestDTO = exchange.getAttribute(Constants.REQUESTDTO);
 
-        final DivideRuleHandle ruleHandle = GsonUtil.fromJson(rule.getHandle(), DivideRuleHandle.class);
+        final DivideRuleHandle divideRuleHandle = GsonUtil.fromJson(rule.getHandle(), DivideRuleHandle.class);
 
-        if (StringUtils.isBlank(ruleHandle.getGroupKey())) {
-            ruleHandle.setGroupKey(Objects.requireNonNull(requestDTO).getModule());
+        if (StringUtils.isBlank(divideRuleHandle.getGroupKey())) {
+            divideRuleHandle.setGroupKey(Objects.requireNonNull(requestDTO).getModule());
         }
 
-        if (StringUtils.isBlank(ruleHandle.getCommandKey())) {
-            ruleHandle.setCommandKey(Objects.requireNonNull(requestDTO).getMethod());
+        if (StringUtils.isBlank(divideRuleHandle.getCommandKey())) {
+            divideRuleHandle.setCommandKey(Objects.requireNonNull(requestDTO).getMethod());
         }
 
-        final List<DivideUpstream> upstreamList =
-                upstreamCacheManager.findUpstreamListBySelectorId(selector.getId());
-        if (CollectionUtils.isEmpty(upstreamList)) {
-            LogUtils.error(LOGGER, "divide upstream config error：{}", rule::toString);
+        final List<DivideUpstream> divideUpstreams = upstreamCacheManager.findUpstreamListBySelectorId(selector.getId());
+
+        if (CollectionUtils.isEmpty(divideUpstreams)) {
+            LogUtils.debug(LOGGER, "DivideUpstream不存在,执行下一个责任链插件");
             return chain.execute(exchange);
         }
 
         DivideUpstream divideUpstream = null;
-        if (upstreamList.size() == 1) {
-            divideUpstream = upstreamList.get(0);
+        if (divideUpstreams.size() == 1) {
+            divideUpstream = divideUpstreams.get(0);
         } else {
-            if (StringUtils.isNoneBlank(ruleHandle.getLoadBalance())) {
-                final LoadBalance loadBalance = LoadBalanceFactory.of(ruleHandle.getLoadBalance());
+            if (StringUtils.isNoneBlank(divideRuleHandle.getLoadBalance())) {
+                final LoadBalance loadBalance = LoadBalanceFactory.of(divideRuleHandle.getLoadBalance());
                 final String ip = Objects.requireNonNull(exchange.getRequest().getRemoteAddress()).getAddress().getHostAddress();
-                divideUpstream = loadBalance.select(upstreamList, ip);
+                divideUpstream = loadBalance.select(divideUpstreams, ip);
             }
         }
 
         if (Objects.isNull(divideUpstream)) {
-            LogUtils.error(LOGGER, () -> "LoadBalance has error！");
+            LogUtils.debug(LOGGER, "LoadBalance DivideUpstream不存在,执行下一个责任链插件");
             return chain.execute(exchange);
         }
 
-        HttpCommand command = new HttpCommand(HystrixBuilder.build(ruleHandle), exchange, chain, requestDTO, buildRealURL(divideUpstream), ruleHandle.getTimeout());
-        return Mono.create((MonoSink<Object> s) -> {
-            Subscription sub = command.toObservable().subscribe(s::success, s::error, s::success);
-            s.onCancel(sub::unsubscribe);
+        HttpCommand command = new HttpCommand(HystrixBuilder.build(divideRuleHandle), exchange, chain, requestDTO, buildRealURL(divideUpstream), divideRuleHandle.getTimeout());
+        return Mono.create((MonoSink<Object> monoSink) -> {
+            Subscription subscription = command.toObservable().subscribe(monoSink::success, monoSink::error, monoSink::success);
+            monoSink.onCancel(subscription::unsubscribe);
             if (command.isCircuitBreakerOpen()) {
-                LogUtils.error(LOGGER, () -> ruleHandle.getGroupKey() + "....http:circuitBreaker is Open.... !");
+                LogUtils.error(LOGGER, "触发熔断风控", (a) -> U.lformat("module", divideRuleHandle.getGroupKey(), "method", divideRuleHandle.getCommandKey(), "maxConcurrentRequests", divideRuleHandle.getMaxConcurrentRequests()));
             }
-        }).doOnError(throwable -> {
-            throwable.printStackTrace();
-            exchange.getAttributes().put(Constants.CLIENT_RESPONSE_RESULT_TYPE,
-                    ResultEnum.ERROR.getName());
-            chain.execute(exchange);
+        }).doOnError(exception -> {
+            exchange.getAttributes().put(Constants.CLIENT_RESPONSE_RESULT_TYPE, ResultEnum.ERROR.getName());
+            Mono<Void> result = chain.execute(exchange);
+            LogUtils.error(LOGGER, "请求后台失败,执行下一个责任链插件", (a) -> U.lformat("exception", ExceptionUtil.printStackTraceToString(exception), "result", JSON.toJSON(result)));
         }).then();
     }
 

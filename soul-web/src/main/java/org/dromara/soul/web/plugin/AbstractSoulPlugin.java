@@ -75,6 +75,7 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
             //获取selector
             final List<SelectorZkDTO> selectors = zookeeperCacheManager.findSelectorByPluginName(getNamed());
             if (CollectionUtils.isEmpty(selectors)) {
+                LogUtils.debug(LOGGER, "SelectorZkDTO不存在,执行下一个责任链插件");
                 return chain.execute(exchange);
             }
             final SelectorZkDTO selectorZkDTO = selectors.stream()
@@ -82,16 +83,16 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
                     .findFirst().orElse(null);
 
             if (Objects.isNull(selectorZkDTO)) {
+                LogUtils.debug(LOGGER, "不存在有效SelectorZkDTO,执行下一个责任链插件");
                 return chain.execute(exchange);
             }
 
             if (selectorZkDTO.getLoged()) {
-                LogUtils.info(LOGGER, getNamed()
-                        + " selector success selector name :{}", selectorZkDTO.getName());
+                LogUtils.info(LOGGER, getNamed() + " selector success selector name :{}", selectorZkDTO.getName());
             }
-            final List<RuleZkDTO> rules =
-                    zookeeperCacheManager.findRuleBySelectorId(selectorZkDTO.getId());
+            final List<RuleZkDTO> rules = zookeeperCacheManager.findRuleBySelectorId(selectorZkDTO.getId());
             if (CollectionUtils.isEmpty(rules)) {
+                LogUtils.debug(LOGGER, "RuleZkDTO不存在,执行下一个责任链插件");
                 return chain.execute(exchange);
             }
 
@@ -104,24 +105,25 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
                 if (PluginEnum.DIVIDE.getName().equals(getNamed())
                         || PluginEnum.DUBBO.getName().equals(getNamed())
                         || PluginEnum.SPRING_CLOUD.getName().equals(getNamed())) {
-                    LogUtils.info(LOGGER, () -> Objects.requireNonNull(request).getModule() + ":"
-                            + request.getMethod() + " not match  " + getNamed() + "  rule");
-                    final SoulResult error = SoulResult.error(HttpStatus.NOT_FOUND.value(),
-                            Constants.UPSTREAM_NOT_FIND);
-                    return exchange.getResponse()
-                            .writeWith(Mono.just(exchange.getResponse().bufferFactory()
-                                    .wrap(Objects.requireNonNull(JsonUtils.toJson(error)).getBytes())));
+                    final SoulResult error = SoulResult.error(HttpStatus.NOT_FOUND.value(), Constants.UPSTREAM_NOT_FIND);
+                    Mono<Void> result = exchange.getResponse().writeWith(
+                            Mono.just(
+                                    exchange.getResponse().bufferFactory().wrap(Objects.requireNonNull(JsonUtils.toJson(error)).getBytes())
+                            )
+                    );
+                    LogUtils.info(LOGGER, "RuleZkDTO不存在,直接返回错误信息", (a) -> U.lformat("module", request.getModule(), "method", request.getMethod(), "rule is null;rule name", getNamed(), "result", JSON.toJSON(result)));
+                    return result;
                 }
+                LogUtils.debug(LOGGER, "RuleZkDTO不存在,执行下一个责任链插件");
                 return chain.execute(exchange);
             }
 
             if (rule.getLoged()) {
-                LogUtils.info(LOGGER, () -> Objects.requireNonNull(request).getModule() + ":" + request.getMethod() + " match " + getNamed()
-                        + " rule is name :"
-                        + rule.getName());
+                LogUtils.info(LOGGER, "RuleZkDTO不存在,执行下一个责任链插件", (a) -> U.lformat("module", request.getModule(), "method", request.getMethod(), "match or rule name", getNamed()));
             }
             return doExecute(exchange, chain, selectorZkDTO, rule);
         }
+        LogUtils.debug(LOGGER, "无需规则匹配,直接执行下一个责任链插件");
         return chain.execute(exchange);
     }
 
@@ -136,12 +138,14 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
         return true;
     }
 
-    private RuleZkDTO filterRule(final ServerWebExchange exchange, final List<RuleZkDTO> rules) {
-        return rules.stream()
-                .filter(rule -> Objects.nonNull(rule) && rule.getEnabled())
-                .filter((RuleZkDTO ruleZkDTO) -> MatchStrategyFactory.of(ruleZkDTO.getMatchMode())
-                        .match(ruleZkDTO.getConditionZkDTOList(), exchange))
+    private RuleZkDTO filterRule(final ServerWebExchange exchange, final List<RuleZkDTO> ruleZkDTOS) {
+        RuleZkDTO ruleZkDTO1 = ruleZkDTOS.stream()
+                .filter(ruleZkDTO -> Objects.nonNull(ruleZkDTO) && ruleZkDTO.getEnabled())
+                .filter(ruleZkDTO -> MatchStrategyFactory.of(ruleZkDTO.getMatchMode())
+                        .match(ruleZkDTO.getConditionZkDTOList(), exchange)
+                )
                 .findFirst().orElse(null);
+        return ruleZkDTO1;
     }
 
     /**

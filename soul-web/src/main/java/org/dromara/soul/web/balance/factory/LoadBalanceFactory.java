@@ -33,8 +33,7 @@ import java.util.stream.StreamSupport;
  */
 public class LoadBalanceFactory {
 
-    private static final ServiceLoader<LoadBalance> SERVICE_LOADER =
-            SpiLoadFactory.loadAll(LoadBalance.class);
+    private static final ServiceLoader<LoadBalance> SERVICE_LOADER = SpiLoadFactory.loadAll(LoadBalance.class);
 
     /**
      * factory of .
