@@ -18,12 +18,13 @@
 
 package org.dromara.soul.extend.demo.extend;
 
+import cn.hutool.log.StaticLog;
 import com.alibaba.fastjson.JSON;
 import org.dromara.soul.common.dto.zk.RuleZkDTO;
 import org.dromara.soul.common.dto.zk.SelectorZkDTO;
 import org.dromara.soul.common.enums.PluginTypeEnum;
 import org.dromara.soul.common.utils.LogUtils;
-import org.dromara.soul.common.utils.U;
+import top.doublespring.utils.U;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.plugin.AbstractSoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
@@ -95,7 +96,7 @@ public class FunctionPlugin extends AbstractSoulPlugin {
     @Override
     protected Mono<Void> doExecute(ServerWebExchange exchange, SoulPluginChain chain, SelectorZkDTO selector, RuleZkDTO rule) {
         Mono<Void> result = chain.execute(exchange);
-        LogUtils.debug(LOGGER, "执行责任链插件", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "selector", JSON.toJSON(selector), "RuleZkDTO", JSON.toJSON(rule), "result", JSON.toJSON(result)));
+        StaticLog.debug("执行责任链插件", U.format("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "selector", JSON.toJSON(selector), "RuleZkDTO", JSON.toJSON(rule), "result", JSON.toJSON(result)));
         return result;
 
     }

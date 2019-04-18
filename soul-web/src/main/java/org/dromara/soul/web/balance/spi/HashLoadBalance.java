@@ -24,6 +24,7 @@ import org.dromara.soul.common.exception.SoulException;
 import org.dromara.soul.web.balance.LoadBalance;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -76,11 +77,7 @@ public class HashLoadBalance implements LoadBalance {
         }
         md5.reset();
         byte[] keyBytes;
-        try {
-            keyBytes = key.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new SoulException("Unknown string :" + key, e);
-        }
+        keyBytes = key.getBytes(StandardCharsets.UTF_8);
 
         md5.update(keyBytes);
         byte[] digest = md5.digest();

@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin.before;
 
+import cn.hutool.log.StaticLog;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.soul.common.constant.Constants;
@@ -30,8 +31,6 @@ import org.dromara.soul.common.enums.WafEnum;
 import org.dromara.soul.common.result.SoulResult;
 import org.dromara.soul.common.utils.GsonUtil;
 import org.dromara.soul.common.utils.JsonUtils;
-import org.dromara.soul.common.utils.LogUtils;
-import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.plugin.AbstractSoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
@@ -40,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import top.doublespring.utils.U;
 
 import javax.validation.constraints.NotBlank;
 import java.util.Objects;
@@ -63,7 +63,7 @@ public class WafPlugin extends AbstractSoulPlugin {
      */
     public WafPlugin(final ZookeeperCacheManager zookeeperCacheManager) {
         super(zookeeperCacheManager);
-        LogUtils.info(LOGGER, "实例化WafPlugin", (a) -> U.lformat(
+        StaticLog.debug("实例化WafPlugin", U.format(
                 "zookeeperCacheManager", JSON.toJSON(zookeeperCacheManager)
         ));
     }
@@ -76,9 +76,9 @@ public class WafPlugin extends AbstractSoulPlugin {
         final WafHandle wafHandle = GsonUtil.fromJson(handle, WafHandle.class);
 
         if (Objects.isNull(wafHandle) || StringUtils.isBlank(wafHandle.getPermission())) {
-            LogUtils.info(LOGGER, "waf handler can not config：{}", handle);
+            StaticLog.debug("waf handler can not config：{}", handle);
             Mono<Void> result = chain.execute(exchange);
-            LogUtils.debug(LOGGER, "执行WafPlugin -> WafHandle参数不合法", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
+            StaticLog.debug("执行WafPlugin -> WafHandle参数不合法", U.format("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
             return result;
         }
         // if reject
@@ -90,11 +90,11 @@ public class WafPlugin extends AbstractSoulPlugin {
                             exchange.getResponse().bufferFactory().wrap(Objects.requireNonNull(JsonUtils.toJson(error)).getBytes())
                     )
             );
-            LogUtils.debug(LOGGER, "执行WafPlugin -> 拒绝", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
+            StaticLog.debug("执行WafPlugin -> 拒绝", U.format("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
             return result;
         }
         Mono<Void> result = chain.execute(exchange);
-        LogUtils.debug(LOGGER, "执行WafPlugin -> 放行", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
+        StaticLog.debug("执行WafPlugin -> 放行", U.format("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
         return result;
     }
 

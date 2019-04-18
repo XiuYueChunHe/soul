@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin.after;
 
+import cn.hutool.log.StaticLog;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.soul.common.constant.Constants;
@@ -26,8 +27,6 @@ import org.dromara.soul.common.dto.zk.SelectorZkDTO;
 import org.dromara.soul.common.enums.PluginEnum;
 import org.dromara.soul.common.enums.PluginTypeEnum;
 import org.dromara.soul.common.enums.ResultEnum;
-import org.dromara.soul.common.utils.LogUtils;
-import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.disruptor.publisher.SoulEventPublisher;
 import org.dromara.soul.web.influxdb.entity.MonitorDO;
@@ -38,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import top.doublespring.utils.U;
 
 import java.util.Objects;
 
@@ -62,7 +62,7 @@ public class MonitorPlugin extends AbstractSoulPlugin {
                          final ZookeeperCacheManager zookeeperCacheManager) {
         super(zookeeperCacheManager);
         this.soulEventPublisher = soulEventPublisher;
-        LogUtils.info(LOGGER, "实例化MonitorPlugin", (a) -> U.lformat(
+        StaticLog.debug("实例化MonitorPlugin", U.format(
                 "soulEventPublisher", JSON.toJSON(soulEventPublisher),
                 "zookeeperCacheManager", JSON.toJSON(zookeeperCacheManager)
         ));
@@ -74,7 +74,7 @@ public class MonitorPlugin extends AbstractSoulPlugin {
         MonitorDO monitorDO = buildMonitorData(exchange);
         soulEventPublisher.publishEvent(monitorDO);
         Mono<Void> result = chain.execute(exchange);
-        LogUtils.info(LOGGER, "执行MonitorPlugin", (a) -> U.lformat(
+        StaticLog.debug("执行MonitorPlugin", U.format(
                 "monitorDO", JSON.toJSON(monitorDO),
                 "result", JSON.toJSON(result)
         ));

@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin.function;
 
+import cn.hutool.log.StaticLog;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,8 +33,6 @@ import org.dromara.soul.common.enums.ResultEnum;
 import org.dromara.soul.common.enums.RpcTypeEnum;
 import org.dromara.soul.common.exception.ExceptionUtil;
 import org.dromara.soul.common.utils.GsonUtil;
-import org.dromara.soul.common.utils.LogUtils;
-import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.balance.LoadBalance;
 import org.dromara.soul.web.balance.factory.LoadBalanceFactory;
 import org.dromara.soul.web.cache.UpstreamCacheManager;
@@ -49,6 +48,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 import rx.Subscription;
+import top.doublespring.utils.U;
 
 import java.util.List;
 import java.util.Objects;
@@ -75,7 +75,7 @@ public class DividePlugin extends AbstractSoulPlugin {
     public DividePlugin(final ZookeeperCacheManager zookeeperCacheManager, final UpstreamCacheManager upstreamCacheManager) {
         super(zookeeperCacheManager);
         this.upstreamCacheManager = upstreamCacheManager;
-        LogUtils.info(LOGGER, "实例化DividePlugin", (a) -> U.lformat(
+        StaticLog.debug("实例化DividePlugin", U.format(
                 "zookeeperCacheManager", JSON.toJSON(zookeeperCacheManager),
                 "upstreamCacheManager", JSON.toJSON(upstreamCacheManager)
         ));
@@ -84,7 +84,7 @@ public class DividePlugin extends AbstractSoulPlugin {
     @Override
     protected Mono<Void> doExecute(final ServerWebExchange exchange, final SoulPluginChain chain, final SelectorZkDTO selector, final RuleZkDTO rule) {
 
-        LogUtils.debug(LOGGER, "执行DividePlugin", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "selector", JSON.toJSON(selector), "rule", JSON.toJSON(rule)));
+        StaticLog.debug("执行DividePlugin", U.format("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "selector", JSON.toJSON(selector), "rule", JSON.toJSON(rule)));
 
         final RequestDTO requestDTO = exchange.getAttribute(Constants.REQUESTDTO);
 
@@ -101,7 +101,7 @@ public class DividePlugin extends AbstractSoulPlugin {
         final List<DivideUpstream> divideUpstreams = upstreamCacheManager.findUpstreamListBySelectorId(selector.getId());
 
         if (CollectionUtils.isEmpty(divideUpstreams)) {
-            LogUtils.debug(LOGGER, "DivideUpstream不存在,执行下一个责任链插件");
+            StaticLog.debug("DivideUpstream不存在,执行下一个责任链插件");
             return chain.execute(exchange);
         }
 
@@ -117,7 +117,7 @@ public class DividePlugin extends AbstractSoulPlugin {
         }
 
         if (Objects.isNull(divideUpstream)) {
-            LogUtils.debug(LOGGER, "LoadBalance DivideUpstream不存在,执行下一个责任链插件");
+            StaticLog.debug("LoadBalance DivideUpstream不存在,执行下一个责任链插件");
             return chain.execute(exchange);
         }
 
@@ -126,12 +126,12 @@ public class DividePlugin extends AbstractSoulPlugin {
             Subscription subscription = command.toObservable().subscribe(monoSink::success, monoSink::error, monoSink::success);
             monoSink.onCancel(subscription::unsubscribe);
             if (command.isCircuitBreakerOpen()) {
-                LogUtils.error(LOGGER, "触发熔断风控", (a) -> U.lformat("module", divideRuleHandle.getGroupKey(), "method", divideRuleHandle.getCommandKey(), "maxConcurrentRequests", divideRuleHandle.getMaxConcurrentRequests()));
+                StaticLog.error("触发熔断风控", U.format("module", divideRuleHandle.getGroupKey(), "method", divideRuleHandle.getCommandKey(), "maxConcurrentRequests", divideRuleHandle.getMaxConcurrentRequests()));
             }
         }).doOnError(exception -> {
             exchange.getAttributes().put(Constants.CLIENT_RESPONSE_RESULT_TYPE, ResultEnum.ERROR.getName());
             Mono<Void> result = chain.execute(exchange);
-            LogUtils.error(LOGGER, "请求后台失败,执行下一个责任链插件", (a) -> U.lformat("exception", ExceptionUtil.printStackTraceToString(exception), "result", JSON.toJSON(result)));
+            StaticLog.error("请求后台失败,执行下一个责任链插件", U.format("exception", ExceptionUtil.printStackTraceToString(exception), "result", JSON.toJSON(result)));
         }).then();
     }
 

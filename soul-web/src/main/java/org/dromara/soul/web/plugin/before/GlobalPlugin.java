@@ -18,18 +18,17 @@
 
 package org.dromara.soul.web.plugin.before;
 
+import cn.hutool.log.StaticLog;
 import com.alibaba.fastjson.JSON;
 import org.dromara.soul.common.enums.PluginEnum;
 import org.dromara.soul.common.enums.PluginTypeEnum;
-import org.dromara.soul.common.utils.LogUtils;
-import org.dromara.soul.common.utils.U;
-import org.dromara.soul.web.handler.SoulWebHandler;
 import org.dromara.soul.web.plugin.SoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import top.doublespring.utils.U;
 
 /**
  * GlobalPlugin.
@@ -50,7 +49,7 @@ public class GlobalPlugin implements SoulPlugin {
     @Override
     public Mono<Void> execute(final ServerWebExchange exchange, final SoulPluginChain chain) {
         Mono<Void> result = chain.execute(exchange);
-        LogUtils.debug(LOGGER, "执行GlobalPlugin", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
+        StaticLog.debug("执行GlobalPlugin", U.format("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
         return result;
     }
 

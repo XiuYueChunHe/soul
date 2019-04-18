@@ -18,8 +18,8 @@
 
 package org.dromara.soul.web.logo;
 
+import cn.hutool.log.StaticLog;
 import org.dromara.soul.common.constant.Constants;
-import org.dromara.soul.common.utils.LogUtils;
 import org.dromara.soul.common.utils.VersionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ public class SoulLogo implements ApplicationListener<ApplicationEnvironmentPrepa
     @Override
     public void onApplicationEvent(final ApplicationEnvironmentPreparedEvent event) {
         String bannerText = buildBannerText();
-        LogUtils.info(LOGGER, () -> bannerText);
+        StaticLog.debug("Welcome!", () -> bannerText);
     }
 
     private String buildBannerText() {

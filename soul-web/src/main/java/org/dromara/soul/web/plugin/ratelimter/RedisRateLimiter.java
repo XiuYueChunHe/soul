@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin.ratelimter;
 
+import cn.hutool.log.StaticLog;
 import org.dromara.soul.common.utils.LogUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +94,7 @@ public class RedisRateLimiter {
                         boolean allowed = results.get(0) == 1L;
                         Long tokensLeft = results.get(1);
                         RateLimiterResponse rateLimiterResponse = new RateLimiterResponse(allowed, tokensLeft);
-                        LogUtils.debug(LOGGER, "RateLimiter response:{}", rateLimiterResponse::toString);
+                        StaticLog.debug("RateLimiter response:{}", rateLimiterResponse::toString);
                         return rateLimiterResponse;
                     });
         } catch (Exception e) {

@@ -18,15 +18,15 @@
 
 package org.dromara.soul.web.condition.judge;
 
+import cn.hutool.log.StaticLog;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.soul.common.dto.zk.ConditionZkDTO;
 import org.dromara.soul.common.enums.OperatorEnum;
-import org.dromara.soul.common.utils.LogUtils;
-import org.dromara.soul.common.utils.U;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import top.doublespring.utils.U;
 
 import java.util.Map;
 import java.util.Objects;
@@ -57,7 +57,7 @@ public class ConditionJudge {
      */
     public static Boolean judge(final ConditionZkDTO conditionZkDTO, final String realData) {
         if (Objects.isNull(conditionZkDTO) || StringUtils.isBlank(realData)) {
-            LogUtils.debug(LOGGER, "判断条件不存在,返回false", (a) -> U.lformat("conditionZkDTO", JSON.toJSON(conditionZkDTO), "realData", realData));
+            StaticLog.debug("判断条件不存在,返回false", U.format("conditionZkDTO", JSON.toJSON(conditionZkDTO), "realData", realData));
             return false;
         }
         return OPERATOR_JUDGE_MAP.get(conditionZkDTO.getOperator())

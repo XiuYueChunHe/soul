@@ -18,10 +18,11 @@
 
 package org.dromara.soul.extend.demo.extend;
 
+import cn.hutool.log.StaticLog;
 import com.alibaba.fastjson.JSON;
 import org.dromara.soul.common.enums.PluginTypeEnum;
 import org.dromara.soul.common.utils.LogUtils;
-import org.dromara.soul.common.utils.U;
+import top.doublespring.utils.U;
 import org.dromara.soul.web.plugin.SoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
 import org.slf4j.Logger;
@@ -56,7 +57,7 @@ public class CustomFunctionPlugin implements SoulPlugin {
     @Override
     public Mono<Void> execute(final ServerWebExchange exchange, final SoulPluginChain chain) {
         Mono<Void> result = chain.execute(exchange);
-        LogUtils.debug(LOGGER, "执行责任链插件", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
+        StaticLog.debug("执行责任链插件", U.format("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result)));
         return result;
     }
 

@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin;
 
+import cn.hutool.log.StaticLog;
 import com.alibaba.fastjson.JSON;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
@@ -29,8 +30,6 @@ import org.dromara.soul.common.enums.PluginEnum;
 import org.dromara.soul.common.enums.SelectorTypeEnum;
 import org.dromara.soul.common.result.SoulResult;
 import org.dromara.soul.common.utils.JsonUtils;
-import org.dromara.soul.common.utils.LogUtils;
-import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.condition.strategy.MatchStrategyFactory;
 import org.dromara.soul.web.request.RequestDTO;
@@ -39,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import top.doublespring.utils.U;
 
 import java.util.List;
 import java.util.Objects;
@@ -69,13 +69,13 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
      */
     @Override
     public Mono<Void> execute(final ServerWebExchange exchange, final SoulPluginChain chain) {
-        LogUtils.debug(LOGGER, "执行责任链插件", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain)));
+        StaticLog.debug("执行责任链插件", U.format("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain)));
         final PluginZkDTO pluginZkDTO = zookeeperCacheManager.findPluginByName(getNamed());
         if (!(skip(exchange) || pluginZkDTO == null || !pluginZkDTO.getEnabled())) {
             //获取selector
             final List<SelectorZkDTO> selectors = zookeeperCacheManager.findSelectorByPluginName(getNamed());
             if (CollectionUtils.isEmpty(selectors)) {
-                LogUtils.debug(LOGGER, "SelectorZkDTO不存在,执行下一个责任链插件");
+                StaticLog.debug("SelectorZkDTO不存在,执行下一个责任链插件");
                 return chain.execute(exchange);
             }
             final SelectorZkDTO selectorZkDTO = selectors.stream()
@@ -83,16 +83,16 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
                     .findFirst().orElse(null);
 
             if (Objects.isNull(selectorZkDTO)) {
-                LogUtils.debug(LOGGER, "不存在有效SelectorZkDTO,执行下一个责任链插件");
+                StaticLog.debug("不存在有效SelectorZkDTO,执行下一个责任链插件");
                 return chain.execute(exchange);
             }
 
             if (selectorZkDTO.getLoged()) {
-                LogUtils.info(LOGGER, getNamed() + " selector success selector name :{}", selectorZkDTO.getName());
+                StaticLog.debug(getNamed() + " selector success selector name :{}", selectorZkDTO.getName());
             }
             final List<RuleZkDTO> rules = zookeeperCacheManager.findRuleBySelectorId(selectorZkDTO.getId());
             if (CollectionUtils.isEmpty(rules)) {
-                LogUtils.debug(LOGGER, "RuleZkDTO不存在,执行下一个责任链插件");
+                StaticLog.debug("RuleZkDTO不存在,执行下一个责任链插件");
                 return chain.execute(exchange);
             }
 
@@ -111,19 +111,19 @@ public abstract class AbstractSoulPlugin implements SoulPlugin {
                                     exchange.getResponse().bufferFactory().wrap(Objects.requireNonNull(JsonUtils.toJson(error)).getBytes())
                             )
                     );
-                    LogUtils.info(LOGGER, "RuleZkDTO不存在,直接返回错误信息", (a) -> U.lformat("module", request.getModule(), "method", request.getMethod(), "rule is null;rule name", getNamed(), "result", JSON.toJSON(result)));
+                    StaticLog.debug("RuleZkDTO不存在,直接返回错误信息", U.format("module", request.getModule(), "method", request.getMethod(), "rule is null;rule name", getNamed(), "result", JSON.toJSON(result)));
                     return result;
                 }
-                LogUtils.debug(LOGGER, "RuleZkDTO不存在,执行下一个责任链插件");
+                StaticLog.debug("RuleZkDTO不存在,执行下一个责任链插件");
                 return chain.execute(exchange);
             }
 
             if (rule.getLoged()) {
-                LogUtils.info(LOGGER, "RuleZkDTO不存在,执行下一个责任链插件", (a) -> U.lformat("module", request.getModule(), "method", request.getMethod(), "match or rule name", getNamed()));
+                StaticLog.debug("RuleZkDTO不存在,执行下一个责任链插件", U.format("module", request.getModule(), "method", request.getMethod(), "match or rule name", getNamed()));
             }
             return doExecute(exchange, chain, selectorZkDTO, rule);
         }
-        LogUtils.debug(LOGGER, "无需规则匹配,直接执行下一个责任链插件");
+        StaticLog.debug("无需规则匹配,直接执行下一个责任链插件");
         return chain.execute(exchange);
     }
 

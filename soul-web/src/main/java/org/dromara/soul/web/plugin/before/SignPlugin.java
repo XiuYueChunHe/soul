@@ -18,6 +18,7 @@
 
 package org.dromara.soul.web.plugin.before;
 
+import cn.hutool.log.StaticLog;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
@@ -31,7 +32,6 @@ import org.dromara.soul.common.result.SoulResult;
 import org.dromara.soul.common.utils.JsonUtils;
 import org.dromara.soul.common.utils.LogUtils;
 import org.dromara.soul.common.utils.SignUtils;
-import org.dromara.soul.common.utils.U;
 import org.dromara.soul.web.cache.ZookeeperCacheManager;
 import org.dromara.soul.web.plugin.AbstractSoulPlugin;
 import org.dromara.soul.web.plugin.SoulPluginChain;
@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import top.doublespring.utils.U;
 
 import java.util.Map;
 import java.util.Objects;
@@ -64,7 +65,7 @@ public class SignPlugin extends AbstractSoulPlugin {
     public SignPlugin(final ZookeeperCacheManager zookeeperCacheManager) {
         super(zookeeperCacheManager);
         this.zookeeperCacheManager = zookeeperCacheManager;
-        LogUtils.info(LOGGER, "实例化SignPlugin", (a) -> U.lformat(
+        StaticLog.debug("实例化SignPlugin", U.format(
                 "zookeeperCacheManager", JSON.toJSON(zookeeperCacheManager)
         ));
 
@@ -85,12 +86,12 @@ public class SignPlugin extends AbstractSoulPlugin {
                             exchange.getResponse().bufferFactory().wrap(Objects.requireNonNull(JsonUtils.toJson(error)).getBytes())
                     )
             );
-            LogUtils.debug(LOGGER, "执行SignPlugin", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result), "signIsPassed", signIsPassed));
+            StaticLog.debug("执行SignPlugin", U.format("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result), "signIsPassed", signIsPassed));
 
             return result;
         }
         Mono<Void> result = chain.execute(exchange);
-        LogUtils.debug(LOGGER, "执行SignPlugin", (a) -> U.lformat("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result), "signIsPassed", signIsPassed));
+        StaticLog.debug("执行SignPlugin", U.format("ServerWebExchange", JSON.toJSON(exchange), "SoulPluginChain", JSON.toJSON(chain), "result", JSON.toJSON(result), "signIsPassed", signIsPassed));
         return result;
     }
 
