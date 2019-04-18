@@ -1,9 +1,9 @@
-import org.dromara.soul.common.utils.LogUtils;
-import top.doublespring.utils.U;
+import cn.hutool.log.StaticLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import top.doublespring.utils.U;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -16,7 +16,7 @@ public class FluxTest {
     @org.junit.Test
     public void aaa() {
         if (LOGGER.isDebugEnabled()) {
-            StaticLog.debug(U.lformat("aaa", 111, "bbb", 222));
+            StaticLog.debug(U.format("aaa", 111, "bbb", 222));
 
         }
 
